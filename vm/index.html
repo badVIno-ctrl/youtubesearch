@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#FF2D55" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Viora" />
+<title>Viora Media (V.media) — AI-аудит YouTube-каналов</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FF0033'/%3E%3Cpath d='M26 20l18 12-18 12z' fill='white'/%3E%3C/svg%3E" />
+<meta name="description" content="Умный парсер и AI-аудитор YouTube-каналов: что залетело, что нет, и пошаговый план роста." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- html2canvas и jspdf грузятся лениво (см. viora-v2-js), чтобы не тормозить первую загрузку -->
+<link rel="stylesheet" href="css/styles.css" />
+
+
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div id="bg-veil"></div>
+
+<div class="layer">
+  <nav class="nav"><div class="wrap nav-in">
+    <div class="brand" onclick="showGate()"><span class="dot"></span><span>Viora<b>Media</b></span></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end">
+    </div>
+  </div></nav>
+
+  <!-- HERO -->
+  <section id="hero" class="wrap hero">
+    <span class="eyebrow"><span class="pulse"></span>Умный парсер · AI-аудитор</span>
+    <div class="mode-switch" id="modeSwitch">
+      <button class="on" data-m="audit" onclick="setMode('audit')">📊 Аудит канала</button>
+      <button data-m="idea" onclick="setMode('idea')">🔍 Поиск идей для роликов</button>
+    </div>
+
+    <div id="auditPane">
+      <h1>У вас есть канал? <span class="hl">Узнайте, почему он не растёт.</span></h1>
+      <p class="sub">Вставьте ссылку на свой YouTube-канал — мы разберём <b>что залетело, а что нет</b>, сравним с конкурентами и дадим <b>пошаговый план роста</b> простым языком.</p>
+      <div class="searchbox">
+        <label class="search-label">🔗 Вставьте ссылку на свой канал</label>
+        <div class="search-shell">
+          <input id="urlInput" type="text" placeholder="youtube.com/@handle, /channel/UC..., /c/name или ссылка на видео" autocomplete="off" />
+          <button class="btn" id="analyzeBtn" onclick="startAnalysis()">Анализировать →</button>
+        </div>
+        <div class="examples">Поддерживаются все форматы. Примеры: 
+          <code onclick="fillEx('https://www.youtube.com/@MrBeast')">@MrBeast</code>
+          <code onclick="fillEx('https://www.youtube.com/@veritasium')">@veritasium</code>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="ideaPane" style="display:none">
+      <h1>Найди тему, <span class="hl">которая гарантированно залетит.</span></h1>
+      <p class="sub">Введи нишу или тему — найдём ролики, которые набрали <b>в разы больше</b> своего канала. Это <b>доказанные виральные форматы</b>, готовые к адаптации под тебя.</p>
+      <div class="searchbox">
+        <label class="search-label">🔍 Тема, ниша или ключевое слово</label>
+        <div class="search-shell">
+          <input id="ideaInput" type="text" placeholder="например: монтаж видео, инвестиции для новичков, рецепты пасты" autocomplete="off" />
+          <button class="btn" id="ideaBtn" onclick="startIdeaSearch()">Найти выбросы →</button>
+        </div>
+        <div class="idea-filters">
+          <div class="dd" data-dd="ideaPreset" title="Тип охоты за идеями">
+            <button type="button" class="dd-btn" onclick="ddToggle(this)"><span class="dd-ic">🎯</span><span class="dd-val">Любые выбросы</span><span class="dd-arr">▾</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt sel" data-v="" data-label="Любые выбросы" onclick="ddPick(this)">🎯 Любые выбросы</div>
+              <div class="dd-opt" data-v="gold" data-label="Золотая жила" onclick="ddPick(this)">💎 Золотая жила (малый канал — большой охват)</div>
+              <div class="dd-opt" data-v="under" data-label="Недооценённые" onclick="ddPick(this)">📈 Недооценённые (×5+ к подписчикам)</div>
+              <div class="dd-opt" data-v="fresh" data-label="Свежий хайп" onclick="ddPick(this)">🔥 Свежий хайп (за 30 дней)</div>
+              <div class="dd-opt" data-v="evergreen" data-label="Вечнозелёные" onclick="ddPick(this)">🌲 Вечнозелёные (старые, но живые)</div>
+              <div class="dd-opt" data-v="seo" data-label="Точно по теме" onclick="ddPick(this)">🔎 Точно по запросу (SEO)</div>
+            </div>
+          </div>
+          <div class="dd" data-dd="ideaTime" title="Период публикации">
+            <button type="button" class="dd-btn" onclick="ddToggle(this)"><span class="dd-ic">🗓️</span><span class="dd-val">За месяц</span><span class="dd-arr">▾</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt" data-v="" data-label="За всё время" onclick="ddPick(this)">За всё время</div>
+              <div class="dd-opt" data-v="7" data-label="За неделю" onclick="ddPick(this)">За неделю</div>
+              <div class="dd-opt sel" data-v="30" data-label="За месяц" onclick="ddPick(this)">За месяц</div>
+              <div class="dd-opt" data-v="90" data-label="За 3 месяца" onclick="ddPick(this)">За 3 месяца</div>
+              <div class="dd-opt" data-v="365" data-label="За год" onclick="ddPick(this)">За год</div>
+            </div>
+          </div>
+          <div class="dd" data-dd="ideaType" title="Формат видео">
+            <button type="button" class="dd-btn" onclick="ddToggle(this)"><span class="dd-ic">🎞️</span><span class="dd-val">Любой формат</span><span class="dd-arr">▾</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt sel" data-v="any" data-label="Любой формат" onclick="ddPick(this)">Любой формат</div>
+              <div class="dd-opt" data-v="long" data-label="Только длинные" onclick="ddPick(this)">🎬 Только длинные</div>
+              <div class="dd-opt" data-v="short" data-label="Только Shorts" onclick="ddPick(this)">⚡ Только Shorts</div>
+            </div>
+          </div>
+          <div class="dd" data-dd="ideaSize" title="Размер канала">
+            <button type="button" class="dd-btn" onclick="ddToggle(this)"><span class="dd-ic">👥</span><span class="dd-val">Любой размер</span><span class="dd-arr">▾</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt sel" data-v="any" data-label="Любой размер" onclick="ddPick(this)">Любой размер канала</div>
+              <div class="dd-opt" data-v="small" data-label="До 100K" onclick="ddPick(this)">До 100K подписчиков</div>
+              <div class="dd-opt" data-v="mid" data-label="100K–1M" onclick="ddPick(this)">100K–1M</div>
+              <div class="dd-opt" data-v="similar" data-label="Близкие к моему" onclick="ddPick(this)">Близкие к моему</div>
+            </div>
+          </div>
+          <div class="dd" data-dd="ideaLang" title="Язык аудитории">
+            <button type="button" class="dd-btn" onclick="ddToggle(this)"><span class="dd-ic">🌐</span><span class="dd-val">Любой язык</span><span class="dd-arr">▾</span></button>
+            <div class="dd-menu">
+              <div class="dd-opt sel" data-v="" data-label="Любой язык" onclick="ddPick(this)">🌐 Любой язык</div>
+              <div class="dd-opt" data-v="ru" data-label="Русская" onclick="ddPick(this)">🇷🇺 Русскоязычная</div>
+              <div class="dd-opt" data-v="en" data-label="Английская" onclick="ddPick(this)">🇬🇧 Англоязычная</div>
+              <div class="dd-opt" data-v="es" data-label="Испанская" onclick="ddPick(this)">🇪🇸 Испаноязычная</div>
+              <div class="dd-opt" data-v="de" data-label="Немецкая" onclick="ddPick(this)">🇩🇪 Немецкая</div>
+              <div class="dd-opt" data-v="fr" data-label="Французская" onclick="ddPick(this)">🇫🇷 Французская</div>
+              <div class="dd-opt" data-v="pt" data-label="Португальская" onclick="ddPick(this)">🇧🇷 Португальская</div>
+              <div class="dd-opt" data-v="hi" data-label="Хинди" onclick="ddPick(this)">🇮🇳 Хинди</div>
+              <div class="dd-opt" data-v="ar" data-label="Арабская" onclick="ddPick(this)">🇸🇦 Арабская</div>
+              <div class="dd-opt" data-v="ja" data-label="Японская" onclick="ddPick(this)">🇯🇵 Японская</div>
+              <div class="dd-opt" data-v="ko" data-label="Корейская" onclick="ddPick(this)">🇰🇷 Корейская</div>
+            </div>
+          </div>
+        </div>
+        <div class="examples">Совет: ищи узко («монтаж в CapCut»), а не широко («видео») — выбросы точнее.</div>
+      </div>
+    </div>
+
+    <div class="hero-feats">
+      <span>Детектор виральных выбросов</span>
+      <span>AI-причины успеха и провала</span>
+      <span>Идеи на основе чужих хитов</span>
+      <span>План на 30 дней</span>
+      <span>PDF-отчёт</span>
+    </div>
+
+  </section>
+
+  <!-- LOADING -->
+  <section id="loading" class="wrap">
+    <div class="loader-ring"></div>
+    <h2 id="loadTitle">Анализирую канал…</h2>
+    <p class="muted" id="loadSub">Это займёт 20–60 секунд</p>
+    <div class="steps" id="steps"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="wrap"></section>
+
+  <!-- IDEA SEARCH RESULTS -->
+  <section id="ideas" class="wrap"></section>
+
+  <footer class="wrap" style="padding:30px 0;text-align:center;color:var(--muted-2);font-size:12.5px;border-top:1px solid rgba(255,255,255,0.05)">
+    Viora Media (V.media) · Данные: YouTube Data API v3 · Аналитика: Viora AI · Сделано для роста каналов
+    <div style="margin-top:8px">Поддержка и предложения: <a href="https://t.me/badVInq" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,0.25)">Telegram @badVInq</a></div>
+  </footer>
+</div>
+
+<!-- VIDEO DEEP-DIVE DRAWER -->
+<div id="vdOverlay" onclick="closeVideoDrawer()"></div>
+<aside id="vdDrawer" aria-hidden="true" role="dialog" aria-label="Разбор ролика">
+  <div class="vd-inner" id="vdInner"></div>
+</aside>
+
+<!-- ENTRY GATE: choose platform -->
+<div id="entryGate">
+  <div class="eg-inner">
+    <div class="eg-head">
+      <span class="eg-eyebrow"><span class="pulse"></span>Viora Media · твой AI-штаб для роста</span>
+      <h1 class="eg-title">С чего <span class="hl">начнём?</span></h1>
+      <p class="eg-sub">Выбери платформу. Для YouTube — полный AI-аудит канала и поиск виральных тем. Для Telegram — личный чат с Viora AI.</p>
+    </div>
+    <div class="eg-cards">
+      <button class="eg-card yt" onclick="enterYoutube()">
+        <div class="eg-glass">
+          <span class="eg-badge">AI-аудит</span>
+          <div class="eg-ic"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M27.4 8.4a3.5 3.5 0 0 0-2.46-2.48C22.76 5.33 14 5.33 14 5.33s-8.76 0-10.94.59A3.5 3.5 0 0 0 .6 8.4 36.7 36.7 0 0 0 0 14a36.7 36.7 0 0 0 .6 5.6 3.5 3.5 0 0 0 2.46 2.48C5.24 22.67 14 22.67 14 22.67s8.76 0 10.94-.59a3.5 3.5 0 0 0 2.46-2.48A36.7 36.7 0 0 0 28 14a36.7 36.7 0 0 0-.6-5.6zM11.2 18.2V9.8L18.4 14z"/></svg></div>
+          <h2>YouTube</h2>
+          <div class="eg-cdesc">Разберём канал по полочкам: что залетело, что нет и почему. Сравним с конкурентами и дадим понятный план роста.</div>
+          <div class="eg-feats">
+            <span>Детектор виральных выбросов</span>
+            <span>AI-причины успеха и провала</span>
+            <span>Поиск тем + план на 30 дней</span>
+          </div>
+          <span class="eg-cta">Открыть аудит →</span>
+        </div>
+      </button>
+      <button class="eg-card tg" onclick="enterTelegram()">
+        <div class="eg-glass">
+          <span class="eg-badge">Чат с AI</span>
+          <div class="eg-ic"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
+          <h2>Telegram</h2>
+          <div class="eg-cdesc">Личный чат с Viora AI: вопросы по контенту, заголовкам и продвижению. Аналитика Telegram-каналов — уже в разработке.</div>
+          <div class="eg-feats">
+            <span>Живой диалог с Viora AI</span>
+            <span>Идеи, заголовки и советы на ходу</span>
+            <span>Аналитика каналов — скоро</span>
+          </div>
+          <span class="eg-cta">Открыть чат →</span>
+        </div>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIORA TELEGRAM STUDIO -->
+<div id="tgScreen">
+  <div class="stg-overlay" id="stgOverlay" onclick="tgToggleSidebar(false)"></div>
+  <aside class="stg-sidebar" id="stgSidebar">
+    <div class="stg-brand" onclick="showGate()" title="На главную — выбор платформы" style="cursor:pointer">
+      <div class="lg"><svg viewBox="0 0 24 24"><path fill="#fff" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
+      <div class="tt">Viora <span>Studio</span></div>
+    </div>
+    <div class="stg-tabs">
+      <button class="stg-tab active" data-tab="chats" onclick="tgTab('chats')">💬 Чаты</button>
+      <button class="stg-tab" data-tab="posts" onclick="tgTab('posts')">📊 Посты</button>
+      <button class="stg-tab" data-tab="plan" onclick="tgTab('plan')">🗓 План</button>
+    </div>
+    <div class="stg-pane" id="stgPaneChats">
+      <button class="stg-newchat" onclick="tgNewChat()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Новый чат</button>
+      <div class="stg-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg><input id="stgSearch" placeholder="Поиск по чатам" oninput="tgRenderChatList()"></div>
+      <div class="stg-listlabel">Чаты</div>
+      <div class="stg-chatlist" id="stgChatList"></div>
+    </div>
+    <div class="stg-pane" id="stgPanePosts" style="display:none">
+      <button class="stg-newchat" onclick="postAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Добавить пост</button>
+      <div class="stg-listlabel">Мои посты <span id="vPostCount"></span></div>
+      <div class="stg-chatlist" id="stgPostList"></div>
+    </div>
+    <div class="stg-pane" id="stgPanePlan" style="display:none">
+      <button class="stg-newchat" onclick="planOpen()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>Открыть планер</button>
+      <div class="stg-listlabel">Контент-план</div>
+      <div class="stg-chatlist" id="stgPlanMini"></div>
+    </div>
+    <div class="stg-side-foot">
+      <button class="stg-foot-btn yt" onclick="switchToYoutube()"><svg viewBox="0 0 28 28"><path fill="currentColor" d="M27.4 8.4a3.5 3.5 0 0 0-2.46-2.48C22.76 5.33 14 5.33 14 5.33s-8.76 0-10.94.59A3.5 3.5 0 0 0 .6 8.4 36.7 36.7 0 0 0 0 14a36.7 36.7 0 0 0 .6 5.6 3.5 3.5 0 0 0 2.46 2.48C5.24 22.67 14 22.67 14 22.67s8.76 0 10.94-.59a3.5 3.5 0 0 0 2.46-2.48A36.7 36.7 0 0 0 28 14a36.7 36.7 0 0 0-.6-5.6zM11.2 18.2V9.8L18.4 14z"/></svg>Перейти к YouTube</button>
+      <button class="stg-foot-btn" onclick="showGate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Выбор платформы</button>
+    </div>
+  </aside>
+  <div class="stg-main">
+    <div class="stg-topbar">
+      <button class="stg-burger" onclick="tgToggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="stg-toptitle">Telegram-студия<small>Viora AI · рост и аналитика</small></div>
+      <div class="stg-modechip" onclick="tgToggleModeMenu(event)"><span id="stgModeLabel">⚡ Авто</span><svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
+        <div class="stg-modemenu" id="stgModeMenu">
+          <button onclick="tgSetMode('auto','⚡ Авто')">⚡ Авто — сам пойму задачу</button>
+          <button onclick="tgSetMode('analyze','📊 Анализ поста')">📊 Анализ поста</button>
+          <button onclick="tgSetMode('ideas','💡 Идеи и заголовки')">💡 Идеи и заголовки</button>
+          <button onclick="tgSetMode('plan','🗓 Контент-план')">🗓 Контент-план</button>
+          <button onclick="tgSetMode('funnel','🔗 Воронка с YouTube')">🔗 Воронка с YouTube</button>
+        </div>
+      </div>
+    </div>
+    <div class="stg-scroll" id="stgScroll"><div class="stg-scroll-in" id="stgScrollIn"></div></div>
+    <div class="stg-composer">
+      <div class="stg-composer-in">
+        <div class="stg-pluswrap">
+          <div class="stg-plusmenu" id="stgPlusMenu">
+            <button onclick="tgPlusAction('post')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>Вставить Telegram-пост</button>
+            <button onclick="tgPlusAction('yt')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>Связать с YouTube</button>
+            <button onclick="tgPlusAction('plan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>Контент-план на неделю</button>
+          </div>
+          <button class="stg-plus" onclick="tgTogglePlus(event)" title="Действия"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+        <textarea id="tgInput" rows="1" placeholder="Спроси Viora или вставь свой Telegram-пост…"></textarea>
+        <button class="stg-send" id="tgSendBtn" onclick="tgSendChat()" title="Отправить"><svg viewBox="0 0 24 24"><path fill="#fff" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></button>
+      </div>
+      <div class="stg-hint">Viora может ошибаться. Аналитика постов — приблизительная оценка по структуре текста.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PLATFORM SWITCH: YouTube -> Telegram -->
+<button id="toTgBtn" onclick="enterTelegram()" title="Открыть Telegram-чат с Viora AI"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg><span>Telegram</span></button>
+
+<!-- AI CHAT WIDGET -->
+<button id="chatFab" style="display:none" onclick="toggleChat()" title="Спросить Viora AI о канале">
+  <span class="ping"></span>💬
+</button>
+<div id="chatPanel">
+  <div class="chat-head">
+    <div class="av">🤖</div>
+    <div>
+      <div class="t">Viora AI</div>
+      <div class="s">Онлайн · знает твой канал</div>
+    </div>
+    <button class="x" onclick="toggleChat()">×</button>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Спроси про свой канал…" autocomplete="off"/>
+    <button onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<script defer src="js/01_block_1.js"></script>
+<script defer src="js/02_block_2.js"></script>
+<script defer src="js/03_block_3.js"></script>
+<script defer src="js/04_block_4.js"></script>
+<script defer src="js/05_block_5.js"></script>
+<script defer src="js/06_vp45.js"></script>
+<script defer src="js/07_block_7.js"></script>
+
+
+<div id="vEditor">
+  <div class="ve-top">
+    <div class="l">
+      <div class="ve-ico" title="Закрыть" onclick="vWriteClose()">←</div>
+      <div class="ve-brand"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 6.4L21 11l-6.6 2.6L12 20l-2.4-6.4L3 11l6.6-2.6z" fill="url(#vg9)"/><defs><linearGradient id="vg9" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#ff3b63"/><stop offset="1" stop-color="#ff7a4d"/></linearGradient></defs></svg>Редактор</div>
+    </div>
+    <div class="r">
+      <div class="ve-fmt">
+        <button title="Отменить (Ctrl+Z)" onmousedown="return veCmd(event,'undo')">↶</button>
+        <button title="Вернуть (Ctrl+Y)" onmousedown="return veCmd(event,'redo')">↷</button>
+        <span class="sep"></span>
+        <button title="Жирный" onmousedown="return veCmd(event,'bold')"><b>B</b></button>
+        <button title="Курсив" onmousedown="return veCmd(event,'italic')"><i>I</i></button>
+        <button title="Зачёркнутый" onmousedown="return veCmd(event,'strike')"><s>S</s></button>
+        <button title="Моноширинный" onmousedown="return veCmd(event,'mono')">&lt;/&gt;</button>
+        <button title="Заголовок" onmousedown="return veCmd(event,'h2')">H2</button>
+        <button title="Подзаголовок" onmousedown="return veCmd(event,'h3')">H3</button>
+        <button title="Цитата" onmousedown="return veCmd(event,'quote')">&rdquo;</button>
+        <button title="Список" onmousedown="return veCmd(event,'ul')">&bull;</button>
+        <button title="Ссылка" onmousedown="return veCmd(event,'link')">🔗</button>
+      </div>
+      <div class="ve-ico" title="Скопировать ссылку на пост" onclick="veCopyLink()">🔗</div>
+      <button class="ve-cta" title="Скопировать пост с форматированием для вставки в Telegram" onclick="v3CopyTg()">📋 Для Telegram</button>
+      <button class="ve-cta primary" onclick="veSavePost()">Сохранить в посты</button>
+    </div>
+  </div>
+  <div class="ve-paper">
+    <div class="ve-title" id="veTitle" contenteditable="true" data-ph="Заголовок…"></div>
+    <div class="ve-author" id="veAuthor" contenteditable="true" data-ph="Автор или подзаголовок"></div>
+    <div class="ve-rule"></div>
+    <div class="ve-body" id="veBody" contenteditable="true" data-ph="Начни писать… выдели текст, чтобы форматировать."></div>
+  </div>
+  <div class="ve-aifab" id="veAiFab" onclick="veAiToggle(true)"><span class="av">✦</span>Viora</div>
+  <div class="ve-ai" id="veAI">
+    <div class="ve-ai-h">
+      <div class="ve-ai-av">✦</div>
+      <div class="ve-ai-meta"><div class="t">Viora</div><div class="s">помогает писать</div></div>
+      <button class="ve-ai-x" onclick="veAiToggle(false)">×</button>
+    </div>
+    <div class="ve-ai-msgs" id="veAiMsgs"></div>
+    <div class="ve-ai-quick">
+      <button class="ve-q" onclick="veIdeas(true)">💡 Идеи</button>
+      <button class="ve-q" onclick="veCheck(true)">🔍 Проверить</button>
+      <button class="ve-q" onclick="veAsk('Сделай заголовок более цепляющим')">✨ Заголовок</button>
+    </div>
+    <div class="ve-ai-input">
+      <textarea id="veAiInput" rows="1" placeholder="Спроси Viora…"></textarea>
+      <button class="ve-send" id="veSendBtn" onclick="veSend()" title="Отправить">▲</button>
+    </div>
+  </div>
+  <div class="ve-linkpop" id="veLinkPop">
+    <input id="veLinkInput" type="text" placeholder="Вставь ссылку…" />
+    <button class="go" onclick="veLinkApply()">OK</button>
+    <button class="x" onclick="veLinkClose()">×</button>
+  </div>
+</div>
+<div id="vPub">
+  <div class="ve-top">
+    <div class="l"><div class="ve-ico" title="Закрыть" onclick="vPubClose()">←</div><div class="ve-brand">Предпросмотр</div></div>
+    <div class="r"><button class="ve-cta" onclick="vPubCopy()">🔗 Копировать ссылку</button><button class="ve-cta primary" onclick="vPubWrite()">✕ Редактировать</button></div>
+  </div>
+  <div class="ve-paper">
+    <div class="ve-title" id="vpubTitle"></div>
+    <div class="ve-author" id="vpubAuthor"></div>
+    <div class="ve-rule"></div>
+    <div class="ve-body" id="vpubBody"></div>
+  </div>
+</div>
+<script defer src="js/08_block_8.js"></script>
+<script defer src="js/09_block_9.js"></script>
+<script defer src="js/10_block_10.js"></script>
+<script defer src="js/11_block_11.js"></script>
+
+
+<script defer src="js/12_block_12.js"></script>
+
+<script defer src="js/13_block_13.js"></script>
+
+<script defer src="js/14_viora-r10-js.js"></script>
+
+<script defer src="js/15_block_15.js"></script>
+<script defer src="js/16_viora-v2-js.js"></script>
+
+<script defer src="js/17_v3pack.js"></script>
+
+
+<script defer src="js/18_v4pack.js"></script>
+
+
+<script defer src="js/19_v5pack.js"></script>
+
+
+
+<script defer src="js/20_v6pack.js"></script>
+
+
+<script defer src="js/21_v7pack.js"></script>
+
+
+<script defer src="js/22_v8pack.js"></script>
+
+<script defer src="js/23_v9pack.js"></script>
+
+
+
+
+
+
+
+<script defer src="js/24_v10pack.js"></script>
+
+
+<!-- VIORA_V11_PACK -->
+
+<script defer src="js/25_block_25.js"></script>
+<!-- VIORA_V11_PACK -->
+
+<!-- VIORA_V12_PACK -->
+
+<script defer src="js/26_block_26.js"></script>
+<!-- VIORA_V12_PACK -->
+<!-- VIORA_V13_PACK -->
+
+<script defer src="js/27_block_27.js"></script>
+<!-- VIORA_V13_PACK -->
+
+
+<!-- VIORA_V14_PACK -->
+
+<script defer src="js/28_block_28.js"></script>
+<!-- VIORA_V14_PACK -->
+
+
+<!-- VIORA_V15_PACK -->
+
+<script defer src="js/29_block_29.js"></script>
+<!-- VIORA_V15_PACK -->
+
+<!-- ============ VIORA_V16_PACK: Штаб · календарь · турнир · чек-ап · онбординг + V17: фиксы · Штаб 2.0 · неделя · авто-синк · демо ============ -->
+
+
+<script defer src="js/30_block_30.js"></script>
+<script defer src="js/31_block_31.js"></script>
+<script defer src="js/32_block_32.js"></script>
+
+
+<script defer src="js/33_block_33.js"></script>
+<script defer src="js/34_block_34.js"></script>
+
+
+<script defer src="js/35_block_35.js"></script>
+<script defer src="js/36_block_36.js"></script>
+
+
+<script defer src="js/37_block_37.js"></script>
+<script defer src="js/38_block_38.js"></script>
+<script defer src="js/39_block_39.js"></script>
+
+<script defer src="js/40_v20b1.js"></script>
+
+<script defer src="js/41_v20b2pack.js"></script>
+
+<script defer src="js/42_v21pack.js"></script>
+<!-- ====================================================================
+     VIORA v22 — «Старт и возвращение»
+     Самодостаточный модуль: онбординг новичка (A1, A2) + ретеншн (B1–B4).
+     Изолированный namespace localStorage `viora_v22_*`, свои хелперы,
+     CSS-префикс `.v22`. Читает общую правду `viora_shoots_v1` (канбан)
+     и синхронит её с renderShootsList. API-ключи не используются напрямую —
+     AI-вызовы идут через глобальный callMistralRaw с мягким фолбэком.
+     ==================================================================== -->
+
+<script defer src="js/43_block_43.js"></script>
+
+<!-- VIORA v22 — точе��ные мобильные фиксы наложений (scoped, десктоп не затронут) -->
+
+
+<!-- ====================================================================
+     VIORA v23 — ФАЗА 1: фиксы наложений (навбар, «Карточка дня»),
+     сворачивание «Продюсерского разбора». Грузится последним, аддитивно,
+     существующую логику и API-ключи не трогает.
+     ==================================================================== -->
+
+<script defer src="js/44_block_44.js"></script>
+
+<script defer src="js/45_block_45.js"></script>
+
+
+<script defer src="js/46_block_46.js"></script>
+
+<script defer src="js/47_block_47.js"></script>
+
+<script defer src="js/48_v26js.js"></script>
+
+
+<script defer src="js/49_v26m2js.js"></script>
+
+
+
+
+<script defer src="js/50_v26m3js.js"></script>
+
+
+
+
+<script defer src="js/51_v27js.js"></script>
+
+
+
+
+<script defer src="js/52_v28js.js"></script>
+
+
+
+
+<script defer src="js/53_v28m2js.js"></script>
+
+
+
+
+<script defer src="js/54_v28m3js.js"></script>
+
+
+
+
+<script defer src="js/55_v28m4js.js"></script>
+
+
+
+
+<script defer src="js/56_v28m5js.js"></script>
+
+
+
+
+<script defer src="js/57_v29m6js.js"></script>
+
+
+
+
+<script defer src="js/58_v28m7js.js"></script>
+
+
+
+
+<script defer src="js/59_v28m8js.js"></script>
+
+
+
+
+<!-- ===== VIORA V30 ANALYTICS PACK (additive) ===== -->
+<script defer src="js/60_block_60.js"></script>
+<!-- ===== END VIORA V30 ===== -->
+
+<!-- ===== VIORA V31 GROWTH & ACTION PACK (additive) ===== -->
+<script defer src="js/61_block_61.js"></script>
+<!-- ===== END VIORA V31 ===== -->
+
+<!-- ===== VIORA V32 BLOGGER MODE + AUTO-COMPETITORS (additive) ===== -->
+<script defer src="js/62_block_62.js"></script>
+<!-- ===== END VIORA V32 ===== -->
+
+<!-- ====================================================================
+     VIORA — ФАЗА 2: расхламление и полировка (аддитивно).
+     Грузится последним. Логику разделов и API-ключи НЕ трогает.
+     A) Единый стек уведомлений — карточки-тосты не наслаиваются.
+     B) Единая маршрутизация старых входов в один профиль-центр.
+     C) UX-полировка: тач-зоны, фокус, плавность, reduced-motion.
+     ==================================================================== -->
+
+<script defer src="js/63_block_63.js"></script>
+
+
+<!-- ====================================================================
+     VIORA — ФАЗА 3: AI-ядро (VioraAI). Аддитивно, грузится последним.
+     Ключи и эндпоинты API НЕ изменяются — ядро лишь оборачивает вызовы
+     к api.mistral.ai, добавляя надёжность, кэш, фейловер-слот и заземление.
+     ==================================================================== -->
+<script defer src="js/64_block_64.js"></script>
+
+<!-- ====================================================================
+     VIORA — БОЛЬШОЙ ПАК УЛУЧШЕНИЙ (v31)
+     65 — perf: lazy-изображения, пауза анимаций в фоне
+     66 — история аудитов с дельтой метрик и сравнением «до/после»
+     67 — UI/UX: скелетоны, мобильная полировка, командная навигация
+     ==================================================================== -->
+<script defer src="js/65_perf.js"></script>
+<script defer src="js/66_history_delta.js"></script>
+<script defer src="js/67_uipolish.js"></script>
+
+</body></html>

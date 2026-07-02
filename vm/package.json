@@ -1,0 +1,17 @@
+{
+  "name": "my-project",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "serve -l 3000 --no-clipboard .",
+    "start": "serve -l 3000 --no-clipboard ."
+  },
+  "pnpm": {
+    "overrides": {
+      "hono": "4.12.25"
+    }
+  },
+  "dependencies": {
+    "serve": "^14.2.6"
+  }
+}
