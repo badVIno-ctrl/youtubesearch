@@ -1,8 +1,9 @@
 <!-- ===================== VIORA MEDIA · README ===================== -->
 
 <div align="center">
+  
+<img width="1434" height="854" alt="image" src="https://github.com/user-attachments/assets/7f09697e-620f-4a44-b313-6f6ab95ecf75" />
 
-<img width="900" alt="Viora Media — AI-штаб для роста YouTube" src="https://github.com/user-attachments/assets/fbc81672-8d72-4af8-b961-6860f2d2e046" />
 
 <br/>
 <br/>
