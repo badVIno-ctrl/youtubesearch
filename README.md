@@ -16,8 +16,7 @@
 
 <br/>
 
-[![Открыть приложение](https://img.shields.io/badge/🚀_ОТКРЫТЬ_ПРИЛОЖЕНИЕ-vioramedia.onrender.com-FF2D55?style=for-the-badge&logoColor=white)](https://vioramedia.onrender.com/)
-
+[![Открыть приложение](https://img.shields.io/badge/🚀_ОТКРЫТЬ_ПРИЛОЖЕНИЕ-vioramedia.onrender.com-FF2D55?style=for-the-badge&logoColor=white)](https://viorasearch.onrender.com/)
 <br/>
 
 ![YouTube](https://img.shields.io/badge/YouTube-Live_Data-FF0000?style=flat-square&logo=youtube&logoColor=white)
