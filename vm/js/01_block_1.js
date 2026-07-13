@@ -57,79 +57,7 @@ window.addEventListener('unhandledrejection',function(ev){
 });
 
 
-/* ===================================================================== */
-/*  NEON KATAKANA GRID BACKGROUND (calm, twinkling)                     */
-/* ===================================================================== */
-(function matrix(){
-  const cv=document.getElementById('matrix'),ctx=cv.getContext('2d');
-  const kata="アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ0123456789".split("");
-  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  // neon palette from the reference: cyan / blue / soft pink + rare red accent
-  const palette=["#36c2ff","#3a7bff","#5ad1ff","#ff5db1","#9d7bff","#7fe0ff"];
-  const RED="#ff2d55";
-  let w,h,cols,rows,cells,fs=22,dpr=Math.min(2,window.devicePixelRatio||1);
-  function rnd(a,b){return a+Math.random()*(b-a);}
-  function build(){
-    w=innerWidth;h=innerHeight;
-    cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    fs=w<560?17:w<900?19:22;
-    cols=Math.ceil(w/fs)+1;rows=Math.ceil(h/fs)+1;
-    cells=[];
-    for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
-      const isRed=Math.random()<0.06;
-      cells.push({
-        x:i*fs, y:j*fs+fs,
-        ch:kata[(Math.random()*kata.length)|0],
-        col:isRed?RED:palette[(Math.random()*palette.length)|0],
-        base:rnd(0.10,0.34),           // resting opacity (dim)
-        amp:rnd(0.10,0.42),            // twinkle amplitude
-        spd:rnd(0.0006,0.0022),        // twinkle speed
-        ph:rnd(0,Math.PI*2),           // phase
-        nextSwap:rnd(1500,7000),       // ms until char changes
-        t0:0
-      });
-    }
-  }
-  build();
-  let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(build,180);});
-  let _lastT=0;const _FRAME_MS=1000/30; /* cap ~30fps: полноэкранный canvas с glow — дорогой */
-  function frame(t){
-    requestAnimationFrame(frame);
-    if(document.hidden)return;            /* вкладка в фоне — не рисуем вообще */
-    if(t-_lastT<_FRAME_MS)return;         /* fps cap */
-    _lastT=t;
-    ctx.clearRect(0,0,w,h);
-    ctx.font=fs+"px 'Sora',monospace";
-    ctx.textBaseline='alphabetic';
-    for(let k=0;k<cells.length;k++){
-      const c=cells[k];
-      // occasionally morph the glyph
-      if(t-c.t0>c.nextSwap){c.ch=kata[(Math.random()*kata.length)|0];c.t0=t;c.nextSwap=rnd(1500,7000);}
-      const a=Math.max(0,Math.min(1,c.base+Math.sin(t*c.spd+c.ph)*c.amp));
-      const bright=a>0.55;
-      ctx.globalAlpha=a;
-      ctx.fillStyle=bright?'#eaf6ff':c.col;
-      ctx.shadowColor=c.col;
-      ctx.shadowBlur=bright?12:6;
-      ctx.fillText(c.ch,c.x,c.y);
-    }
-    ctx.globalAlpha=1;ctx.shadowBlur=0;
-  }
-  function staticFrame(){
-    ctx.clearRect(0,0,w,h);
-    ctx.font=fs+"px 'Sora',monospace";
-    for(let k=0;k<cells.length;k++){
-      const c=cells[k];
-      ctx.globalAlpha=c.base+0.12;
-      ctx.fillStyle=c.col;ctx.shadowColor=c.col;ctx.shadowBlur=6;
-      ctx.fillText(c.ch,c.x,c.y);
-    }
-    ctx.globalAlpha=1;ctx.shadowBlur=0;
-  }
-  if(reduce){staticFrame();addEventListener('resize',()=>setTimeout(staticFrame,200));}
-  else{requestAnimationFrame(frame);}
-})();
+/* фоновая канва (katakana rain) удалена — фон теперь лёгкий CSS-градиент, ноль CPU */
 
 /* ===================================================================== */
 /*  HELPERS                                                              */
@@ -898,8 +826,8 @@ async function _passTopics(payload){
 
 /* ПРОХОД D — ФИНАЛЬНЫЙ СИНТЕЗ: главная утечка, скор, эмоции, триггеры, план */
 async function _passSynthesis(payload,A,B,C){
-  const sys='Ты — Viora AI, главный продюсер. Сделай ФИНАЛЬНЫЙ СИНТЕЗ ра��б��ра канала: на основе сигналов и выводов прошлых проходов сформулируй ГЛАВНУЮ УТЕЧКУ роста (1-2 предложения с цифрами), общий скор 0-100 и его разбивку, эмоциональный профиль аудитории, триггеры и список конкретных изменений + план действий по неделям. Никакой воды, только цифры и конкретика этого канала. ФОРМАТ СОВЕТА: ЧТО изменить -> ПОЧЕМУ (со ссылкой на методику и цифру) -> ЭФФЕКТ в цифрах -> ПРИМЕР. '+_AUD_RULE+' Верни СТРОГО валидный JSON, без markdown.\n'+kbPick(['visp','hunt','funnel','scenarioErrors','scenarioCubes','mission','benefit','comments']);
-  const schema='Схема ответа: {"main_leak":"1-2 предложения: самый большой ограничитель роста этого канала, с опорой на цифры","leak_tag":"короткий тег проблемы, 2-4 слова","score":"число 0-100","score_breakdown":[{"factor":"Вовлечённость","value":0},{"factor":"Регулярность","value":0},{"factor":"Доля хитов","value":0},{"factor":"Упаковка","value":0}],"emotional_profile":{"summary":"1-2 предложения","works":[{"emotion":"что заходит","evidence":"в каком ролике + цифра"}],"avoid":[{"emotion":"что не цепляет","why":"почему, с примером"}]},"triggers":[{"trigger":"триггер","example":"ролик, где сработал","how_to_use":"как применять"}],"concrete_changes":[{"change":"действие без воды","target":"ролик/рубрика","effect":"эффект в цифрах","priority":"high|medium|low"}],"action_plan":[{"step":"задача с деталями","why":"эффект в цифрах","priority":"high|medium|low","week":1}],"roadmap_story":"2-4 предложения: путь канала по датам — что менял автор и что выстрелило"}';
+  const sys='Ты — Viora AI, главный продюсер. Сделай ФИНАЛЬНЫЙ СИНТЕЗ ра��б��ра канала: на основе сигналов и выводов прошлых проходов сформулируй ГЛАВНУЮ УТЕЧКУ роста (1-2 предложения с цифрами), общий скор 0-100 и его разбивку, список конкретных изменений и план действий по неделям. Включай только выводы, которые ведут к действию; наблюдения без действия отбрасывай. Никакой воды, только цифры и конкретика этого канала. ФОРМАТ СОВЕТА: ЧТО изменить -> ПОЧЕМУ (со ссылкой на методику и цифру) -> ЭФФЕКТ в цифрах -> ПРИМЕР. '+_AUD_RULE+' Верни СТРОГО валидный JSON, без markdown.\n'+kbPick(['visp','hunt','funnel','scenarioErrors','scenarioCubes','mission','benefit','comments']);
+  const schema='Схема ответа: {"main_leak":"1-2 предложения: самый большой ограничитель роста этого канала, с опорой на цифры","leak_tag":"короткий тег проблемы, 2-4 слова","score":"число 0-100","score_breakdown":[{"factor":"Вовлечённость","value":0},{"factor":"Регулярность","value":0},{"factor":"Доля хитов","value":0},{"factor":"Упаковка","value":0}],"concrete_changes":[{"change":"действие без воды","target":"ролик/рубрика","effect":"эффект в цифрах","priority":"high|medium|low"}],"action_plan":[{"step":"задача с деталями","why":"эффект в цифрах","priority":"high|medium|low","week":1}]}';
   const brief={
     audience_profile:payload.audience_profile,
     channel:payload.channel,
@@ -927,12 +855,9 @@ function validateAudit(a){
   out.score_breakdown=A(a.score_breakdown).filter(x=>x&&typeof x==='object'&&x.factor!=null)
     .map(x=>({factor:S(x.factor),value:Math.max(0,Math.min(100,parseFloat(x.value)||0))}));
   ['title_patterns','hit_formula','competitor_takeaways'].forEach(k=>{out[k]=A(a[k]).map(S).filter(Boolean);});
-  ['hits_reasons','flops_reasons','topics','next_videos','content_ideas','versus','action_plan','triggers','concrete_changes'].forEach(k=>{out[k]=A(a[k]).filter(x=>x&&typeof x==='object');});
-  if(a.emotional_profile&&typeof a.emotional_profile==='object'){
-    out.emotional_profile={summary:S(a.emotional_profile.summary),
-      works:A(a.emotional_profile.works).filter(x=>x&&typeof x==='object'),
-      avoid:A(a.emotional_profile.avoid).filter(x=>x&&typeof x==='object')};
-  }
+  ['hits_reasons','flops_reasons','topics','next_videos','content_ideas','versus','action_plan','concrete_changes'].forEach(k=>{out[k]=A(a[k]).filter(x=>x&&typeof x==='object');});
+  /* мусорные поля старых разборов вычищаем — только качественная польза */
+  delete out.emotional_profile; delete out.triggers; delete out.roadmap_story;
   return out;
 }
 
@@ -963,8 +888,7 @@ async function callMistral(payload){
 6. Возвращай СТРОГО валидный JSON по схеме, без markdown, без пояснений вокруг.
 7. ОБЯЗАТЕЛЬНО используй данные конкурентов: смотри, какие темы и форматы залетают у похожих каналов (их topShorts/topLongs), и предлагай автору конкретные идеи на основе ЧУЖИХ хитов — «у конкурента X видео про Y набрало Z — сними свою версию про …». Это самое ценное в разборе.
 8. ОБЯЗАТЕЛЬНО опирайся на блок "signals" (расчётные сигналы): регулярность постинга, разницу длины заголовков у хитов и провалов, долю цифр в заголовках, тренд просмотров и вовлечённости (свежие vs старые ролики), баланс форматов. Это твоя доказательная база — main_leak и title_patterns должны прямо ссылаться на эти числа, а не на догадки. Также используй payload.titleTriggers (для каждого триггера заголовка посчитано liftVsRest — во сколько раз ролики с ним набирают больше остальных): ссылайся на самые сильные триггеры по имени и числам в title_patterns, triggers и concrete_changes, и предложи усилить недоиспользованные.
-9. ОБЯЗАТЕЛЬНО заполни topic_conclusion, topics, emotional_profile, triggers и concrete_changes. Для КАЖДОЙ рубрики из payload.topics дай человеческий вывод по образцу: «про X в среднем столько-то просм/день, про Y меньше — аудитории интереснее X». Определи, на какие ЧУВСТВА и ТРИГГЕРЫ реагирует аудитория ИМЕННО этого канала (опираясь на то, что у него залетало), и дай 4-7 КОНКРЕТНЫХ изменений без воды — что именно поменять, в каком ролике/рубрике и какой эффект в цифрах ждать.
-10. roadmap_story: 2-4 предложения про путь канала по датам — что менял автор (формат, темп, темы) и что из этого выстрелило.
+9. ОБЯЗАТЕЛЬНО заполни topic_conclusion, topics и concrete_changes. Для КАЖДОЙ рубрики из payload.topics дай человеческий вывод по образцу: «про X в среднем столько-то просм/день, про Y меньше — аудитории интереснее X». Дай 4-7 КОНКРЕТНЫХ изменений без воды — что именно поменять, в каком ролике/рубрике и какой эффект в цифрах ждать.
 11. ФОРМАТ КАЖДОГО СОВЕТА (ради ясности): строй его по схеме ЧТО изменить → ПОЧЕМУ (со ссылкой на методику и конкретную цифру канала) → ЭФФЕКТ в цифрах → ПРИМЕР (готовый заголовок / кубик сценария / идея превью). Никаких абстракций без примера.
 12. ГОВОРИ ПОНЯТИЯМИ МЕТОДИКИ ПО ИМЕНАМ: называй технику превью (ошибки / нельзя / до-после / «стоит ли» / стоимость / год…), ступень Лестницы Ханта, тип видео (хайп / экспертное / продающее), кубик сценарной башни (красный=проблема, оранжевый=усугубление, зелёный=решение…), параметр шортса. Заголовки и хуки оценивай по ВИСП. В thumb_idea всегда указывай конкретную технику превью + тёплый цвет под ЦА. Для Shorts помни про длину ~30 сек и 6 параметров. Опирайся на signals.titleTechniques (какие приёмы заголовков реально дают хиты на ЭТОМ канале) — хвали используемые и предлагай недостающие.
 
@@ -990,10 +914,7 @@ ${kbFor('audit')}`;
  "versus":[{"name":"имя конкурента","insight":"чем обгоняет и что именно перенять — с цифрами"}],
  "action_plan":[{"step":"конкретная задача с деталями","why":"ожидаемый эффект в цифрах","priority":"high|medium|low","week":1}],
  "topic_conclusion":"2-4 предложения: главный вывод по рубрикам — какая тема реально интересна аудитории этого канала и на что делать ставку, с конкретными цифрами просм/день по темам",
- "emotional_profile":{"summary":"1-2 предложения: какой эмоциональный крючок работает на этой аудитории","works":[{"emotion":"чувство/эмоция, которое заходит","evidence":"в каком ролике сработало + цифра"}],"avoid":[{"emotion":"что НЕ цепляет эту аудиторию","why":"почему, с примером ролика"}]},
- "triggers":[{"trigger":"конкретный триггер (любопытство, страх упустить, выгода, конфликт, число, авторитет…)","example":"ролик, где он сработал","how_to_use":"как применять в следующих роликах — конкретно"}],
- "concrete_changes":[{"change":"одно конкретное действие без воды","target":"какой ролик или рубрика","effect":"ожидаемый эффект в цифрах","priority":"high|medium|low"}],
- "roadmap_story":"2-4 предложения: путь канала по датам — что менял автор и что выстрелило"
+ "concrete_changes":[{"change":"одно конкретное действие без воды","target":"какой ролик или рубрика","effect":"ожидаемый эффект в цифрах","priority":"high|medium|low"}]
 }`;
   const body={
     model:MODEL_DEEP,
@@ -1106,7 +1027,25 @@ function computeSignals(groups){
       allHits.forEach(v=>{if(v.dow!=null)_dc[v.dow]=(_dc[v.dow]||0)+1;const _hb=Math.floor((v.hour||0)/3)*3;_hc[_hb]=(_hc[_hb]||0)+1;});
       const _bd=Object.keys(_dc).sort((a,b)=>_dc[b]-_dc[a])[0];
       const _bh=Object.keys(_hc).sort((a,b)=>_hc[b]-_hc[a])[0];
-      sig.bestWindow={day:_bd!=null?_dn[_bd]:null,hourRange:_bh!=null?(_bh+'–'+(+_bh+3)+' ч'):null,note:'окно, в которое выходили хиты канала'};
+      sig.bestWindow={day:_bd!=null?_dn[_bd]:null,hourRange:_bh!=null?(_bh+'–'+(+_bh+3)+' ч'):null,src:'own',note:'окно, в которое выходили хиты канала'};
+    }
+  }catch(e){}
+  // мало своих данных → берём окно хитов НИШИ: когда публикуют похожие каналы (детерминированно)
+  try{
+    const _ownN=allHits.length+allFlops.length;
+    if((!sig.bestWindow||!sig.bestWindow.day||_ownN<6)&&Array.isArray(competitors)&&competitors.length){
+      const _nv=[];
+      competitors.forEach(c=>{
+        const vs=((c&&c.vids)||[]).filter(v=>v&&v.dow!=null&&v.hour!=null&&isFinite(v.viewsPerDay));
+        if(vs.length<3)return;
+        const _md=median(vs.map(v=>v.viewsPerDay))||1;
+        vs.forEach(v=>_nv.push({dow:v.dow,hour:v.hour,viewsPerDay:v.viewsPerDay/_md}));
+      });
+      const _nbw=bestPostingWindow(_nv);
+      if(_nbw&&_nbw.winBest){
+        sig.bestWindow={day:_nbw.winBest.day,hourRange:_nbw.winBest.time,src:'niche',sample:_nv.length,
+          note:'окно, в которое выходят хиты похожих каналов ниши — у канала пока мало своих публикаций'};
+      }
     }
   }catch(e){}
   return sig;
@@ -1130,7 +1069,7 @@ function openProfileQuiz(){
   function opt(group,val,emoji,title,desc){var sel=draft[group]===val;return '<button type="button" class="pq-opt'+(sel?' on':'')+'" data-g="'+group+'" data-v="'+val+'" style="text-align:left;border:1px solid '+(sel?'#ff2d55':'var(--card-brd)')+';background:'+(sel?'rgba(255,45,85,.12)':'rgba(255,255,255,.03)')+';color:#eaf1f8;border-radius:13px;padding:13px 15px;cursor:pointer;display:flex;gap:11px;align-items:flex-start;transition:.15s;width:100%;font-family:inherit"><span style="font-size:20px;line-height:1">'+emoji+'</span><span><span style="display:block;font-weight:700;font-size:14.5px">'+title+'</span><span style="display:block;font-size:12.5px;color:var(--muted);margin-top:2px">'+desc+'</span></span></button>';}
   function render(){
     ov.innerHTML='<div style="max-width:520px;width:100%;background:linear-gradient(180deg,#141118,#0e0c11);border:1px solid var(--card-brd);border-radius:20px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto">'
-      +'<div style="font-family:Sora,sans-serif;font-weight:700;font-size:20px;color:#fff;margin-bottom:4px">Настроим Viora под тебя</div>'
+      +'<div style="font-family:Onest,sans-serif;font-weight:700;font-size:20px;color:#fff;margin-bottom:4px">Настроим Viora под тебя</div>'
       +'<div style="font-size:13px;color:var(--muted);margin-bottom:18px">2 быстрых вопроса — и разбор, советы и ИИ будут говорить на твоём языке.</div>'
       +'<div style="font-weight:700;font-size:13.5px;color:#cdd2d8;margin-bottom:9px">1. Какой у тебя опыт?</div>'
       +'<div style="display:grid;gap:8px;margin-bottom:18px">'+opt('level','new','🐣','Новичок','Только начинаю или роликов мало — объясняй проще')+opt('level','pro','🚀','Уже веду канал','Есть опыт — давай плотно, без азов')+'</div>'
@@ -1649,7 +1588,6 @@ function kbRenderMethod(){
 
 /* --- мастер-рендер --- */
 function renderProducer(){
-  try{kbRenderMethod();}catch(e){}
   try{kbContentPlan();}catch(e){}
   try{renderQuality();}catch(e){}
   try{kbHooks();}catch(e){}
@@ -1860,7 +1798,7 @@ function renderDashboard(){
 
   <!-- MY CHANNEL: реальные метрики через Google OAuth -->
   <div class="section" id="myStatsSection" style="display:none">
-    <div class="section-h"><h2>📈 Мой канал — реальные метрики</h2><div class="desc">Данные напрямую из YouTube Analytics твоего канала за последние 28 дней: реальное удержание, время просмотра и подписки. Это видно только владельцу канала — у конкурентов таких цифр нет.</div></div>
+    <div class="section-h"><h2>📈 Подключённый канал — реальные метрики</h2><div class="desc">Появляется после «Подключить канал»: разовая передача данных из YouTube API, только чтение. Это не вход и не аккаунт на сайте. Реальное удержание, время просмотра и подписки за 28 дней — цифры, которых нет у конкурентов.</div></div>
     <div id="myStatsArea"></div>
   </div>
 
@@ -1897,9 +1835,10 @@ function renderDashboard(){
 
   <!-- toggle -->
   <div class="section">
-    <div class="section-h"><h2>📊 Разбор видео</h2>
+    <div class="section-h"><h2>📊 Аудит роликов: Shorts и длинные — отдельно</h2>
       <div class="desc">Shorts, длинные ролики и стримы анализируются отдельно — у них разная механика и базовый уровень просмотров. «Залетело» и «не зашло» считаются относительно уровня <b>самого канала</b>, а не абсолютных чисел. <span class="howcalc" title="Каждый ролик сравнивается с медианой роликов своего возраста на канале (когорты: до недели, до месяца, до 3 месяцев и т.д.). Так старые видео не выглядят провалами только потому, что просмотры уже не растут, а свежие — хитами только потому, что они новые.">ℹ️ как считается</span></div>
     </div>
+    <div id="fmtAudit" class="fmt-audit"></div>
     <div class="toggle" id="toggle">
       <button data-g="longs" onclick="switchGroup('longs')"><span>🎬 Длинные</span><span class="cnt">${longs.length}</span></button>
       <button data-g="shorts" onclick="switchGroup('shorts')"><span>⚡ Shorts</span><span class="cnt">${shorts.length}</span></button>
@@ -1934,12 +1873,6 @@ function renderDashboard(){
   <div class="section">
     <div class="section-h"><h2>🧬 Твоя формула хита</h2><div class="desc">Общие черты роликов, которые залетали. Применяй как чек-лист к следующему видео.</div></div>
     <div class="card"><div class="formula" id="formula"></div></div>
-  </div>
-
-  <!-- emotions & triggers of the channel -->
-  <div class="section" id="emoSection" style="display:none">
-    <div class="section-h"><h2>❤️‍🔥 На какие чувства и триггеры давить</h2><div class="desc">Что эмоционально цепляет именно твою аудиторию — на основе того, что у тебя уже залетало. Используй в заголовках, превью и подаче.</div></div>
-    <div id="emoArea"></div>
   </div>
 
   <!-- title patterns -->
@@ -2003,23 +1936,7 @@ function renderDashboard(){
     </div>
   </div>
 
-  <!-- PRODUCER: FUNNEL + WEEKLY (Etap 5) -->
-  <div class="section">
-    <div class="section-h"><h2>🔗 Воронка YouTube → Telegram</h2><div class="desc">YouTube приводит новых людей, Telegram превращает их в лояльное ядро: бонусы, бэкстейдж, ранний доступ. Ниже — схема пер��лива и готовая связка под твой канал: какие ролики снять, лид-магнит и тексты-призывы.</div></div>
-    <div class="card fnl" id="fnlCard">
-      <div class="fnl-map">
-        <div class="fnl-stage s1"><div class="fs-ic">📺</div><div class="fs-t">YouTube</div><div class="fs-d">Охват и новые зрители</div></div>
-        <div class="fnl-arr">→</div>
-        <div class="fnl-stage s2"><div class="fs-ic">🧲</div><div class="fs-t">Лид-магнит</div><div class="fs-d">Причина подписаться в TG</div></div>
-        <div class="fnl-arr">→</div>
-        <div class="fnl-stage s3"><div class="fs-ic">✈️</div><div class="fs-t">Telegram</div><div class="fs-d">Лояльное ядро аудитории</div></div>
-        <div class="fnl-arr">→</div>
-        <div class="fnl-stage s4"><div class="fs-ic">💎</div><div class="fs-t">Ценность</div><div class="fs-d">Удержание и монетизация</div></div>
-      </div>
-      <div class="fnl-cta"><button class="pbtn" onclick="fnlBuild()">⚡ Собрать воронку под мой канал (ИИ)</button><button class="pbtn ghost" onclick="enterTelegram()">Открыть Telegram-режим →</button></div>
-      <div id="fnlOut" class="fnl-out"></div>
-    </div>
-  </div>
+  <!-- WEEKLY -->
   <div class="section">
     <div class="section-h"><h2>🗓️ Недельный разбор</h2><div class="desc">Возвращайся раз в неделю: я сравниваю замеры канала, показываю динамику и собираю фокус-план на 7 дней. Замеры копятся прямо в браузере — ничего настраивать не нужно.</div></div>
     <div class="card wk" id="wkCard">
@@ -2027,12 +1944,6 @@ function renderDashboard(){
       <div class="wk-cta"><button class="pbtn" onclick="wkBuild()">📋 Собрать разбор и план на неделю (ИИ)</button></div>
       <div id="wkOut" class="wk-out"></div>
     </div>
-  </div>
-
-  <!-- PRODUCER HQ: METHOD -->
-  <div class="section">
-    <div class="section-h"><h2>🎬 Продюсерский штаб</h2><div class="desc">Инструменты продюсера на основе методики: ВИСП, Лестница Ханта, воронка просмотров и принципы сценариев. Это твоя база знаний — на неё опираются все советы ниже и ИИ-разборы.</div></div>
-    <div id="prodMethod"></div>
   </div>
 
   <!-- PRODUCER: TOOLS -->
@@ -2108,23 +2019,7 @@ function renderDashboard(){
       </div>
       <div class="lab-out" id="labOut"><div class="muted" style="padding:14px 2px">Введи тему выше и получи пачку кликабельных заголовков под твой канал 🧪</div></div>
     </div>
-  </div>
-
-  <!-- 6. simulator -->
-  <div class="section">
-    <div class="section-h"><h2>🔮 Симулятор перед загрузкой</h2><div class="desc">Опиши будущее видео — AI прикинет на основе истории канала, зайдёт ли оно, и что подправить.</div></div>
-    <div class="card"><div class="sim-grid">
-      <div class="sim-form">
-        <label>Заголовок будущего видео</label>
-        <input id="simTitle" placeholder="Например: 5 ошибок новичков в..."/>
-        <label>Тип</label>
-        <select id="simType"><option value="longs">🎬 Длинное</option><option value="shorts">⚡ Shorts</option></select>
-        <label>Длительность (мин для длинных / сек для Shorts)</label>
-        <input id="simDur" type="number" placeholder="10" value="10"/>
-        <button class="btn" onclick="runSim()">Спрогнозировать</button>
-      </div>
-      <div class="sim-result" id="simResult"><div class="muted">Заполни поля слева и нажми «Спрогнозировать» 🔮</div></div>
-    </div></div>
+    <div class="ab-mem" id="abArea"></div>
   </div>
 
   <!-- 7. competitors -->
@@ -2166,9 +2061,10 @@ function renderDashboard(){
       <button class="btn" onclick="exportPDF(event)">📄 Скачать PDF-отчёт</button>
       <button class="btn ghost" onclick="window.v8PdfFull&&v8PdfFull(event)">📋 Полный дашборд в PDF</button>
       <button class="btn ghost" onclick="window.vShareImage&&vShareImage()">🖼 Карточка результата</button>
+      <button class="btn ghost" onclick="window.vShareLink&&vShareLink(this)">🔗 Ссылка на аудит</button>
       <button class="btn ghost" onclick="goHome()">← Новый анализ</button>
     </div>
-    <div class="note">PDF-отчёт — компактная выжимка на 1-2 страницы. «Полный дашборд» — скрин всего отчёта целиком.</div>
+    <div class="note">PDF-отчёт — компактная выжимка на 1-2 страницы. «Полный дашборд» — скрин всего отчёта целиком. «Ссылка на аудит» — короткая ссылка с выжимкой: открывается без анализа и без ключей.</div>
   </div>
   `;
 
@@ -2179,7 +2075,8 @@ function renderDashboard(){
   renderFormula();
   renderTopicAnalytics();
   renderRoadmap();
-  renderEmotions();
+  renderFormatAudit();
+  renderAbTitles();
   renderConcrete();
   renderNicheTopics();renderTriggerLab();renderProducer();
   renderCompetitors();
@@ -2224,7 +2121,7 @@ function renderWeekFocus(){
       if(sig.vispCoverage&&sig.vispCoverage.flopsAvgLetters<sig.vispCoverage.hitsAvgLetters)push('У��иль заголовки: у слабых роликов в среднем '+sig.vispCoverage.flopsAvgLetters+' буквы ВИСП из 4, у хитов — '+sig.vispCoverage.hitsAvgLetters,'Добавляй в заголовок недостающее: '+((sig.vispCoverage.mostMissedInFlops||[]).join(', ')||'выгоду и интригу')+'.');
       const tt=((STATE.topics||[]).filter(t=>t.verdict==='up').sort((a,b)=>(b.medVpd||0)-(a.medVpd||0)))[0];
       if(tt)push('Сними следующий ролик в рубрике «'+tt.name+'»','Это твоя самая сильная тема: ~'+fmt(Math.round(tt.medVpd||0))+' просмотров/день в среднем.');
-      if(sig.bestWindow&&sig.bestWindow.day)push('Публикуй в своё лучшее окно: '+sig.bestWindow.day+', '+(sig.bestWindow.hourRange||''),'В это окно выходили твои хиты.');
+      if(sig.bestWindow&&sig.bestWindow.day){const _bwN=sig.bestWindow.src==='niche';push((_bwN?'Публикуй в окно хитов ниши: ':'Публикуй в своё лучшее окно: ')+sig.bestWindow.day+', '+(sig.bestWindow.hourRange||''),_bwN?'Своих роликов у канала пока мало, поэтому окно взято из публикаций похожих каналов: в это время выходят их хиты.':'В это окно выходили твои хиты.');}
     }
     if(!items.length){sec.style.display='none';return;}
     sec.style.display='block';
@@ -2598,7 +2495,9 @@ function renderHeatmap(){
   var _ctxNote=(typeof PROFILE!=='undefined'&&PROFILE&&PROFILE.context==='fresh')?' Для трендового контента попасть в это окно особенно важно — выходи быстро и на пике интереса.':((typeof PROFILE!=='undefined'&&PROFILE&&PROFILE.context==='expert')?' Для вечнозелёного контента время выхода вторично — польза и упаковка важнее.':'');
   var _rec;
   if(_bw&&_bw.winBest){_rec='<div style="background:linear-gradient(135deg,rgba(54,224,122,.12),rgba(255,255,255,.03));border:1px solid rgba(54,224,122,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5;color:#eaf1f8">🎯 <b>Лучшее окно для публикации:</b> '+_bw.winBest.day+', '+_bw.winBest.time+' — в среднем <b>'+fmt(Math.round(_bw.winBest.avg))+'</b> просм/день'+(_bw.winBest.n>=2?' ('+_bw.winBest.n+' видео)':'')+'.'+(_bw.enough?'':' <span style="color:var(--muted)">Данных пока немного — это ориентир, а не правило.</span>')+_ctxNote+'</div>';}
-  else{_rec='<div style="color:var(--muted);font-size:13px;margin-bottom:12px">Пока мало роликов с известным временем публикации, чтобы выделить лучшее окно — публикуй регулярнее, и подсказка появится.</div>';}
+  else{var _nw=(STATE.signals&&STATE.signals.bestWindow&&STATE.signals.bestWindow.src==='niche')?STATE.signals.bestWindow:null;
+    if(_nw)_rec='<div style="background:linear-gradient(135deg,rgba(90,140,255,.1),rgba(255,255,255,.03));border:1px solid rgba(90,140,255,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5;color:#eaf1f8">🌐 <b>Окно хитов твоей ниши:</b> '+_nw.day+', '+(_nw.hourRange||'')+' — в это время публикуют свои хиты похожие каналы. <span style="color:var(--muted)">Своих роликов у канала пока мало — когда накопятся свои данные, подсказка станет персональной.</span></div>';
+    else _rec='<div style="color:var(--muted);font-size:13px;margin-bottom:12px">Пока мало роликов с известным временем публикации, чтобы выделить лучшее окно — публикуй регулярнее, и подсказка появится.</div>';}
   const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];const dmap=[6,0,1,2,3,4,5]; // getDay 0=Sun
   const buckets=['0–6','6–9','9–12','12–15','15–18','18–21','21–24'];
   const bIdx=h=>h<6?0:h<9?1:h<12?2:h<15?3:h<18?4:h<21?5:6;
@@ -2754,7 +2653,7 @@ function planStateKey(){return 'tp_plan_v2_'+(STATE.channel?.id||'x');}
 function getPlanState(){let s={done:{},added:[],known:[]};try{const r=JSON.parse(localStorage.getItem(planStateKey())||'null');if(r&&typeof r==='object')s=Object.assign(s,r);}catch(e){}if(!s.done||typeof s.done!=='object')s.done={};if(!Array.isArray(s.added))s.added=[];if(!Array.isArray(s.known))s.known=[];return s;}
 function setPlanState(s){try{localStorage.setItem(planStateKey(),JSON.stringify(s));}catch(e){}}
 function taskSig(step){const t=(step||'').toLowerCase().replace(/[^а-яёa-z]/g,'').slice(0,90);let h=0;for(let i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))|0;}return 's'+(h>>>0).toString(36);}
-function planMiniToast(m){try{const t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:99999;background:#1c1c20;color:#fff;padding:11px 18px;border-radius:12px;font-family:Sora,sans-serif;font-size:13.5px;border:1px solid rgba(255,255,255,.12)';document.body.appendChild(t);setTimeout(()=>{t.style.transition='.3s';t.style.opacity='0';},1500);setTimeout(()=>{try{t.remove();}catch(e){}},1900);}catch(e){}}
+function planMiniToast(m){try{const t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:99999;background:#1c1c20;color:#fff;padding:11px 18px;border-radius:12px;font-family:Onest,sans-serif;font-size:13.5px;border:1px solid rgba(255,255,255,.12)';document.body.appendChild(t);setTimeout(()=>{t.style.transition='.3s';t.style.opacity='0';},1500);setTimeout(()=>{try{t.remove();}catch(e){}},1900);}catch(e){}}
 function vAddToPlan(btn,step,why){if(!step)return;const st=getPlanState();const sig=taskSig(step);const exists=st.added.some(t=>taskSig(t.step)===sig)||(st.known.indexOf(sig)>=0);if(!st.added.some(t=>taskSig(t.step)===sig)){st.added.unshift({step:step,why:why||'Идея, которая сработала у конкурента — адаптируй под свой канал',priority:'medium',week:1,fromCompetitor:true,ts:Date.now()});setPlanState(st);}if(btn){btn.textContent='✓ в плане';btn.classList.add('added');btn.style.pointerEvents='none';btn.style.opacity='.7';}planMiniToast(exists?'Уже в плане развития':'Добавлено в план развития ✓');renderPlan();}
 function vRemovePlanTask(sig){const st=getPlanState();st.added=(st.added||[]).filter(t=>taskSig(t.step)!==sig);if(st.done)delete st.done[sig];setPlanState(st);renderPlan();planMiniToast('Задача убрана из плана');}
 function renderPlan(){
@@ -2870,7 +2769,7 @@ async function runSim(){
   const tips=aiTips?.tips||heuristicTips(title,type);
   res.innerHTML=`<div class="sim-gauge">Прогноз на основе ${hits.length} хитов канала</div>
     <div class="sim-verdict ${verdict.c}">${aiTips?.verdict||verdict.t}</div>
-    <div style="font-family:'Sora','Onest',Inter,sans-serif;font-weight:700;font-size:30px;color:#fff">${aiTips?.score??score}<span style="font-size:15px;color:var(--muted)">/100</span></div>
+    <div style="font-family:'Onest',Inter,sans-serif;font-weight:700;font-size:30px;color:#fff">${aiTips?.score??score}<span style="font-size:15px;color:var(--muted)">/100</span></div>
     <ul class="sim-tips" style="margin-top:14px">${tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 function heuristicTips(title,type){
@@ -3127,6 +3026,58 @@ function curveSVG(curve){
   const area=pad+","+(H-pad)+" "+line+" "+(W-pad)+","+(H-pad);
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,45,85,.45)"/><stop offset="1" stop-color="rgba(255,45,85,0)"/></linearGradient></defs><polygon points="${area}" fill="url(#rg)"/><polyline points="${line}" fill="none" stroke="#FF2D55" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
 }
+function curveSVG2(forecast,real){
+  const W=480,H=120,pad=6;
+  const xs=(i,n)=>pad+(W-2*pad)*(i/(n-1));
+  const ys=val=>pad+(H-2*pad)*(1-val/100);
+  const li=c=>c.map((v,i)=>xs(i,c.length).toFixed(1)+","+ys(v).toFixed(1)).join(" ");
+  const rl=li(real);
+  const area=pad+","+(H-pad)+" "+rl+" "+(W-pad)+","+(H-pad);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="rg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(54,224,160,.4)"/><stop offset="1" stop-color="rgba(54,224,160,0)"/></linearGradient></defs><polygon points="${area}" fill="url(#rg2)"/><polyline points="${li(forecast)}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="6 5"/><polyline points="${rl}" fill="none" stroke="#36e0a0" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+}
+async function vRealCurveMaybe(v,forecast){
+  if(!window.vRealRetention)return;
+  const real=await window.vRealRetention(v.id);
+  if(!Array.isArray(real)||real.length<2)return;
+  const secEl=document.getElementById('vdCurveSec');if(!secEl)return;
+  const avg=Math.round(real.reduce((s,x)=>s+x,0)/real.length);
+  secEl.innerHTML=`<h4>📈 Удержание: факт vs прогноз</h4><div class="vd-curve">${curveSVG2(forecast,real)}<div class="axis"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><div class="fx-legend"><span class="lg real">━ факт из YouTube Analytics · в среднем досматривают ${avg}%</span><span class="lg fc">┅ прогноз ИИ</span></div></div>`;
+}
+/* ===== A/B-память заголовков ===== */
+function abKey(){return 'viora_ab_titles:'+(STATE.channel?.id||'x');}
+function abLoad(){try{const a=JSON.parse(localStorage.getItem(abKey())||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function abStore(a){try{localStorage.setItem(abKey(),JSON.stringify(a.slice(0,40)));}catch(e){}}
+window.vAbApply=function(btn,vid,title){
+  const v=findVideoById(vid);const list=abLoad();
+  if(list.some(x=>x.vid===vid&&x.nt===title)){planMiniToast('Этот вариант уже отслеживается');return;}
+  list.unshift({vid:vid,ot:v?v.title:'',nt:title,ts:Date.now(),vpd0:v?+(+v.viewsPerDay||0).toFixed(2):0});
+  abStore(list);
+  if(btn){btn.textContent='✓ отслеживаю';btn.disabled=true;}
+  planMiniToast('Запомнил. Смени заголовок на YouTube — эффект покажу при следующем анализе');
+  renderAbTitles();
+};
+window.vAbDrop=function(vid,ts){abStore(abLoad().filter(x=>!(x.vid===vid&&x.ts===ts)));renderAbTitles();};
+function renderAbTitles(){
+  const el=document.getElementById('abArea');if(!el)return;
+  const list=abLoad();
+  if(!list.length){el.innerHTML='';return;}
+  const rows=list.map(x=>{
+    const v=findVideoById(x.vid);
+    const days=Math.floor((Date.now()-x.ts)/864e5);
+    const applied=v&&v.title===x.nt;
+    let eff;
+    if(!v)eff='<span class="ab-st">ролик не попал в текущую выборку</span>';
+    else if(!applied)eff='<span class="ab-st wait">заголовок на YouTube ещё старый</span>';
+    else if(days<3)eff='<span class="ab-st wait">применён · копаю данные ('+days+' дн. из 3)</span>';
+    else{
+      const k=x.vpd0>0?(v.viewsPerDay/x.vpd0):null;
+      eff=k==null?'<span class="ab-st">нет базы для сравнения</span>'
+        :'<span class="ab-st '+(k>=1.05?'up':k<=0.95?'down':'')+'">×'+k.toFixed(2)+' к темпу просм./день'+(k>=1.05?' — новый работает 🎉':k<=0.95?' — старый был сильнее':' — примерно одинаково')+'</span>';
+    }
+    return `<div class="ab-row"><div class="ab-t"><span class="old">${esc(x.ot||'')}</span><span class="arr">→</span><span class="new">${esc(x.nt)}</span></div><div class="ab-meta">${new Date(x.ts).toLocaleDateString('ru-RU')} · ${eff}<button class="ab-x" onclick="vAbDrop('${x.vid}',${x.ts})" title="Убрать из памяти">✕</button></div></div>`;
+  }).join('');
+  el.innerHTML=`<div class="section-h" style="margin-top:18px"><h2 style="font-size:19px">🧪 A/B-память заголовков</h2><div class="desc">Варианты, которые ты пометил «применил» в разборе ролика. Смени заголовок на YouTube — при следующем анализе сравню темп просмотров до и после.</div></div><div class="card ab-list">${rows}</div>`;
+}
 async function callMistralRaw(sys,user,maxTokens){
   const _ctrl=new AbortController();const _to=setTimeout(function(){_ctrl.abort();},90000);
   let r;try{r=await fetch("https://api.mistral.ai/v1/chat/completions",{method:"POST",signal:_ctrl.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+MISTRAL_API_KEY},body:JSON.stringify({model:MODEL_DEEP,temperature:0.5,max_tokens:maxTokens||1800,response_format:{type:"json_object"},messages:[{role:"system",content:sys},{role:"user",content:user}]})});}finally{clearTimeout(_to);}
@@ -3169,15 +3120,16 @@ function renderVideoDrawer(v,med,a,offline){
     +(a.why_result?`<div class="vd-sec"><div class="vd-card"><div class="h">🎯 Почему набрал столько</div>${esc(a.why_result)}</div></div>`:"")
     +((Array.isArray(a.triggers)&&a.triggers.length)?`<div class="vd-sec"><h4>🎣 Триггеры автора</h4><div class="vd-tags">${a.triggers.map(t=>`<span class="vd-tag tg">${esc(typeof t==='string'?t:((t.name||'')+(t.how?' — '+t.how:'')))}</span>`).join("")}</div></div>`:"")
     +((Array.isArray(a.emotions)&&a.emotions.length)?`<div class="vd-sec"><h4>❤️‍🔥 На какие чувства давит</h4><div class="vd-tags">${a.emotions.map(t=>`<span class="vd-tag em">${esc(typeof t==='string'?t:((t.name||'')+(t.how?' — '+t.how:'')))}</span>`).join("")}</div></div>`:"")
-    +`<div class="vd-sec"><h4>📈 Прогноз кривой удержания</h4><div class="vd-curve">${curveSVG(curve)}<div class="axis"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><div class="note">AI-прогноз по формату, длине и вовлечённости. Реальный график удержания доступен только в твоём YouTube Studio.</div></div></div>`
+    +`<div class="vd-sec" id="vdCurveSec"><h4>📈 Прогноз кривой удержания</h4><div class="vd-curve">${curveSVG(curve)}<div class="axis"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><div class="note">AI-прогноз по формату, длине и вовлечённости. Подключи свой канал — и здесь появится реальная кривая из YouTube Analytics.</div></div></div>`
     +sec("🎬 Диагноз хука",a.hook)
     +cardH("Как усилить первые секунды",a.hook_fix)
     +cardH("Готовый текст интро",a.intro_script)
     +sec("⏳ Диагноз удержания",a.retention)
     +cardH("Где основной отвал",a.dropoff)
     +(Array.isArray(a.structure)&&a.structure.length?`<div class="vd-sec"><h4>🧱 Как перестроить ролик</h4><ul class="vd-list">${a.structure.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"")
-    +(Array.isArray(a.titles)&&a.titles.length?`<div class="vd-sec"><h4>✍️ Переписанные заголовки</h4><div class="vd-rew">${a.titles.map(t=>`<div class="rw" onclick="copyText(this,this.querySelector('.t').textContent)"><span class="c">⧉</span><span class="t">${esc(t)}</span></div>`).join("")}</div></div>`:"")
+    +(Array.isArray(a.titles)&&a.titles.length?`<div class="vd-sec"><h4>✍️ Переписанные заголовки</h4><div class="vd-rew">${a.titles.map(t=>`<div class="rw" onclick="copyText(this,this.querySelector('.t').textContent)"><span class="c">⧉</span><span class="t">${esc(t)}</span><button class="rw-ab" onclick="event.stopPropagation();vAbApply(this,'${v.id}','${esc((''+t).replace(/'/g,'’'))}')">🧪 применил</button></div>`).join("")}</div></div>`:"")
     +cardH("🖼️ Идея превью",a.thumb);
+  try{vRealCurveMaybe(v,curve);}catch(e){}
 }
 
 /* ===================================================================== */
@@ -3316,7 +3268,7 @@ function saveSnapshot(){
   const ch=STATE.channel;if(!ch||!ch.id)return [];
   const all=[...(STATE.shorts||[]),...(STATE.longs||[])];
   const eng=all.length?all.reduce((s,v)=>s+v.engagement,0)/all.length:0;
-  const snap={date:new Date().toISOString().slice(0,10),ts:Date.now(),subs:ch.subs||0,totalViews:ch.totalViews||0,videoCount:ch.videoCount||0,medVpd:Math.round(median(all.map(v=>v.viewsPerDay))||0),eng:+(eng*100).toFixed(2)};
+  const snap={date:new Date().toISOString().slice(0,10),ts:Date.now(),subs:ch.subs||0,totalViews:ch.totalViews||0,videoCount:ch.videoCount||0,medVpd:Math.round(median(all.map(v=>v.viewsPerDay))||0),eng:+(eng*100).toFixed(2),score:(STATE.ai&&isFinite(+STATE.ai.score))?Math.round(+STATE.ai.score):null,leak:(STATE.ai&&STATE.ai.leak_tag)?String(STATE.ai.leak_tag).slice(0,60):'',planDone:(function(){try{const st=getPlanState();return Object.keys(st.done||{}).filter(k=>st.done[k]).length;}catch(e){return 0;}})()};
   let h=loadHistory(ch.id);
   if(h.length&&h[h.length-1].date===snap.date)h[h.length-1]=snap;else h.push(snap);
   if(h.length>60)h=h.slice(-60);
@@ -3337,7 +3289,15 @@ function renderHistory(){
   const last=h[h.length-1],prev=h[h.length-2];
   const dispInt=n=>fmt(Math.round(n));const dispPct=n=>(+n).toFixed(1)+'%';
   const cards=_deltaCard('Подписчики',last.subs,prev.subs,dispInt)+_deltaCard('Просмотры всего',last.totalViews,prev.totalViews,dispInt)+_deltaCard('Медиана просм./день',last.medVpd,prev.medVpd,dispInt)+_deltaCard('Вовлечённость',last.eng,prev.eng,dispPct);
-  el.innerHTML=`<div class="hist-cards">${cards}</div><div class="hist-chart-wrap"><canvas id="histChart"></canvas></div><div class="note" style="margin-top:8px">Замеров в истории: ${h.length}. Δ показан относительно прошлого замера (${prev.date} → ${last.date}).</div>`;
+  const auds=h.filter(s=>s.score!=null);
+  let auditBlk='';
+  if(auds.length){
+    const la=auds[auds.length-1],pa=auds.length>1?auds[auds.length-2]:null;
+    const d=pa?la.score-pa.score:null;
+    const planPlus=(pa&&la.planDone!=null&&pa.planDone!=null)?Math.max(0,la.planDone-pa.planDone):0;
+    auditBlk=`<div class="aud-hist"><div class="ah-score">🧾 Скор аудита: <b>${la.score}</b>/100 ${d==null?'<span class="dlt flat">первый аудит</span>':`<span class="dlt ${d>0?'up':d<0?'down':'flat'}">${d>0?'▲ +'+d:d<0?'▼ '+d:'■ без изменений'}</span>`}${(pa&&pa.leak&&la.leak&&pa.leak!==la.leak)?`<span class="ah-leak">утечка сменилась: «${esc(pa.leak)}» → «${esc(la.leak)}»</span>`:(la.leak?`<span class="ah-leak">утечка: «${esc(la.leak)}»</span>`:'')}</div>${planPlus>0?`<div class="ah-plan">✅ С прошлого аудита закрыто пунктов плана: +${planPlus}</div>`:''}${auds.length>1?`<div class="ah-log">${auds.slice(-6).map(s=>`<span class="ah-chip" title="${s.leak?esc(s.leak):''}">${s.date.slice(5)} · ${s.score}</span>`).join('')}</div>`:''}</div>`;
+  }
+  el.innerHTML=`<div class="hist-cards">${cards}</div>${auditBlk}<div class="hist-chart-wrap"><canvas id="histChart"></canvas></div><div class="note" style="margin-top:8px">Замеров в истории: ${h.length}. Δ показан относительно прошлого замера (${prev.date} → ${last.date}).</div>`;
   const labels=h.map(s=>s.date.slice(5));
   if(charts.hist){try{charts.hist.destroy();}catch(e){}}
   charts.hist=new Chart(document.getElementById('histChart'),{type:'line',data:{labels,datasets:[{label:'Подписчики',data:h.map(s=>s.subs),borderColor:'#FF2D55',backgroundColor:'rgba(255,45,85,.12)',yAxisID:'y',tension:.3,fill:true,pointRadius:3},{label:'Вовлечённость, %',data:h.map(s=>s.eng),borderColor:'#36c2ff',backgroundColor:'transparent',yAxisID:'y1',tension:.3,pointRadius:3}]},options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{usePointStyle:true,boxWidth:8}}},scales:{y:{position:'left',ticks:{callback:v=>fmt(v)},grid:{color:'rgba(255,255,255,.06)'}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>v+'%'}}}}});
@@ -3481,14 +3441,36 @@ function renderRoadmap(){
   const items=rm.map(m=>{const d=new Date(m.date).toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});const v=m.v;return `<div class="rm-item ${m.type}"><div class="rm-dot">${icon[m.type]||'•'}</div><div class="rm-body"><div class="rm-date">${d}</div>${v?`<a class="rm-vid" href="https://youtu.be/${v.id}" target="_blank" rel="noopener"><img src="${safeImg(v.thumb)}" loading="lazy"/><span>«${esc(v.title).slice(0,70)}»</span></a>`:''}<div class="rm-note">${esc(m.note)}</div>${v?`<div class="rm-mini">👁 ${fmt(v.views)} · 📈 ${fmt(Math.round(v.viewsPerDay))}/день · ${v.isShort?'⚡ Shorts':'🎬 Длинное'}</div>`:''}</div></div>`;}).join('');
   el.innerHTML=`${story?`<div class="rm-story">🧭 ${esc(story)}</div>`:''}<div class="roadmap">${items}</div>`;
 }
-function renderEmotions(){
-  const el=$('#emoArea'),sec=$('#emoSection');if(!el)return;
-  const ai=STATE.ai||{};const ep=ai.emotional_profile||{};const tg=ai.triggers||[];
-  const works=ep.works||[],avoid=ep.avoid||[];
-  if(!works.length&&!avoid.length&&!tg.length&&!ep.summary){if(sec)sec.style.display='none';return;}
-  if(sec)sec.style.display='block';
-  const cell=(o,k)=>`<div class="ec-row"><b>${esc(typeof o==='string'?o:(o.emotion||o.name||''))}</b>${(o&&o[k])?`<span>${esc(o[k])}</span>`:''}</div>`;
-  el.innerHTML=`${ep.summary?`<div class="emo-sum">❤️‍🔥 ${esc(ep.summary)}</div>`:''}<div class="emo-grid">${works.length?`<div class="emo-card good"><div class="ec-h">✅ На что давить</div>${works.map(w=>cell(w,'evidence')).join('')}</div>`:''}${avoid.length?`<div class="emo-card bad"><div class="ec-h">🚫 Что не заходит</div>${avoid.map(w=>cell(w,'why')).join('')}</div>`:''}</div>${tg.length?`<div class="trig-h">🎣 Триггеры, которые работают на твоей аудитории</div><div class="trig-grid">${tg.map(t=>`<div class="trig"><div class="tg-n">${esc(typeof t==='string'?t:(t.trigger||''))}</div>${(t&&t.example)?`<div class="tg-ex">📍 ${esc(t.example)}</div>`:''}${(t&&t.how_to_use)?`<div class="tg-how">→ ${esc(t.how_to_use)}</div>`:''}</div>`).join('')}</div>`:''}`;
+function renderFormatAudit(){
+  const el=$('#fmtAudit');if(!el)return;
+  const ai=STATE.ai||{};const g=STATE.groups||{};
+  const med=k=>fmt(Math.round((g[k]&&g[k].med)||0));
+  const rr=window.__vFmtReal||null;
+  const mmss=x=>{x=Math.round(+x||0);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);};
+  const realLine=o=>{
+    if(!o||!o.views)return '';
+    const mpk=Math.round(o.min/o.views*1000);
+    return `<div class="fa-real">📊 Analytics, 28 дн.: <b>${fmt(o.views)}</b> просм. · <b>${fmt(mpk)}</b> мин внимания на 1000 просм. · ср. просмотр <b>${mmss(o.avd)}</b>${o.subs!=null?` · <b>${o.subs>=0?'+':''}${fmt(o.subs)}</b> подписч.`:''}</div>`;
+  };
+  const cards=[];
+  if((STATE.shorts||[]).length||ai.shorts_insights)cards.push({ic:'⚡',t:'Вывод по Shorts',n:(STATE.shorts||[]).length,m:med('shorts'),txt:ai.shorts_insights||'',real:realLine(rr&&rr.shorts)});
+  if((STATE.longs||[]).length||ai.longform_insights)cards.push({ic:'🎬',t:'Вывод по длинным роликам',n:(STATE.longs||[]).length,m:med('longs'),txt:ai.longform_insights||'',real:realLine(rr&&rr.longs)});
+  if(!cards.length){el.innerHTML='';return;}
+  let vs='';
+  if(rr&&rr.shorts&&rr.longs&&rr.shorts.views>0&&rr.longs.views>0){
+    const mpkS=rr.shorts.min/rr.shorts.views*1000,mpkL=rr.longs.min/rr.longs.views*1000;
+    if(mpkS>0&&mpkL>0){
+      const longWins=mpkL>=mpkS;
+      const k=(Math.max(mpkS,mpkL)/Math.max(1e-9,Math.min(mpkS,mpkL))).toFixed(1);
+      let sub='';
+      if(rr.shorts.subs!=null&&rr.longs.subs!=null){
+        const spkS=rr.shorts.subs/rr.shorts.views*1000,spkL=rr.longs.subs/rr.longs.views*1000;
+        sub=' Подписчиков на 1000 просмотров: Shorts — '+spkS.toFixed(1)+', длинные — '+spkL.toFixed(1)+'.';
+      }
+      vs=`<div class="fa-vs">⚖️ По реальным данным за 28 дней <b>${longWins?'длинные ролики':'Shorts'}</b> приносят ×${k} больше минут внимания на 1000 просмотров.${sub}</div>`;
+    }
+  }
+  el.innerHTML=cards.map(c=>`<div class="fa-card"><div class="fa-h">${c.ic} ${c.t}<span class="fa-meta">${c.n} шт. · медиана ${c.m}/день</span></div><div class="fa-txt">${c.txt?esc(c.txt):'<span class="muted">ИИ-вывод по этому формату появится после анализа — ниже разбор по цифрам.</span>'}</div>${c.real}</div>`).join('')+vs;
 }
 /* ===== Глоссарий: всплывающие подсказки к терминам (Блок 1) ===== */
 const VGLOSSARY={

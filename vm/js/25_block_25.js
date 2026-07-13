@@ -255,7 +255,7 @@ W.v11ShareCard=function(){
   x.strokeStyle='rgba(255,255,255,.14)';x.lineWidth=2;
   if(x.roundRect){x.beginPath();x.roundRect(40,40,1000,1270,36);x.stroke();}
   x.textAlign='center';
-  x.fillStyle='rgba(255,255,255,.55)';x.font='800 30px Sora,Onest,sans-serif';
+  x.fillStyle='rgba(255,255,255,.55)';x.font='800 30px Onest,sans-serif';
   x.fillText('МОЙ ИНДЕКС РОСТА',540,170);
   /* кольцо */
   var cx2=540,cy2=480,R=210;
@@ -263,11 +263,11 @@ W.v11ShareCard=function(){
   var frac=(sc!=null?sc:50)/100;
   var gr=x.createLinearGradient(cx2-R,cy2,cx2+R,cy2);gr.addColorStop(0,'#ff2d55');gr.addColorStop(1,'#ff7a4d');
   x.beginPath();x.arc(cx2,cy2,R,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);x.strokeStyle=gr;x.lineWidth=34;x.lineCap='round';x.stroke();
-  x.fillStyle='#fff';x.font='800 170px Sora,Onest,sans-serif';
+  x.fillStyle='#fff';x.font='800 170px Onest,sans-serif';
   x.fillText(sc!=null?String(sc):'—',540,545);
   x.fillStyle='rgba(255,255,255,.45)';x.font='700 30px Onest,sans-serif';x.fillText('из 100',540,600);
   /* имя канала */
-  x.fillStyle='#fff';x.font='800 52px Sora,Onest,sans-serif';
+  x.fillStyle='#fff';x.font='800 52px Onest,sans-serif';
   var name=s.channel.title||'';if(name.length>26)name=name.slice(0,25)+'…';
   x.fillText(name,540,800);
   var nn=C.nicheName();
@@ -278,7 +278,7 @@ W.v11ShareCard=function(){
     x.fillStyle='rgba(255,255,255,.06)';
     if(x.roundRect){x.beginPath();x.roundRect(cxp-145,920,290,150,24);x.fill();
       x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.beginPath();x.roundRect(cxp-145,920,290,150,24);x.stroke();}
-    x.fillStyle='#fff';x.font='800 46px Sora,Onest,sans-serif';x.fillText(val,cxp,990);
+    x.fillStyle='#fff';x.font='800 46px Onest,sans-serif';x.fillText(val,cxp,990);
     x.fillStyle='rgba(255,255,255,.45)';x.font='600 22px Onest,sans-serif';x.fillText(label,cxp,1035);
   }
   chip(220,'просм/день (медиана)',fmt(medv));

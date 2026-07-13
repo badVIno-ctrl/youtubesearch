@@ -124,7 +124,7 @@ function ring(score,size){
   return '<svg class="rp-ring" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'
     +'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/>'
     +'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>'
-    +'<text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="Sora">'+(has?Math.round(score):'\u2014')+'</text></svg>';
+    +'<text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="Onest">'+(has?Math.round(score):'\u2014')+'</text></svg>';
 }
 function ensurePanel(){ var p=q('#recentPanel'); if(!p){ var hero=q('#hero'); if(!hero)return null; p=D.createElement('div'); p.id='recentPanel'; hero.appendChild(p); } return p; }
 function renderRecent(mode){
@@ -197,7 +197,7 @@ function makeBento(){
   var leak=(s.ai&&s.ai.main_leak)||'', niche=s.primaryNiche||'', formula=(s.ai&&s.ai.hit_formula&&s.ai.hit_formula[0])||'';
   var col=!has?'#888':score>=70?'var(--red-2)':score>=45?'#ffb020':'#ff5470';
   var lab=!has?'\u043d/\u0434':score>=70?'\u0421\u0438\u043b\u044c\u043d\u044b\u0439 \u043a\u0430\u043d\u0430\u043b':score>=45?'\u0415\u0441\u0442\u044c \u043a\u0443\u0434\u0430 \u0440\u0430\u0441\u0442\u0438':'\u0411\u043e\u043b\u044c\u0448\u043e\u0439 \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b';
-  var num=has?'<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Sora" class="vsr-num" data-to="'+score+'">0</text>':'<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Sora">\u2014</text>';
+  var num=has?'<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Onest" class="vsr-num" data-to="'+score+'">0</text>':'<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Onest">\u2014</text>';
   var ringSvg='<svg viewBox="0 0 76 76" width="76" height="76" style="flex:none"><circle cx="38" cy="38" r="33" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="6"/><circle class="vsr-arc" cx="38" cy="38" r="33" fill="none" stroke="'+col+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="207" stroke-dashoffset="207" transform="rotate(-90 38 38)"/>'+num+'</svg>';
   var html='<div class="v-bento">'
     +'<div class="v-tile accent"><div class="vt-k">\u26a1 \u0418\u043d\u0434\u0435\u043a\u0441 \u0440\u043e\u0441\u0442\u0430</div><div style="display:flex;align-items:center;gap:13px;margin-top:6px">'+ringSvg+'<div><div class="vt-sub" style="font-size:13px;color:#fff;font-weight:600">'+lab+'</div><div class="vt-sub">\u0438\u0437 100 \u0431\u0430\u043b\u043b\u043e\u0432</div></div></div></div>'

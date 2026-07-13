@@ -27,14 +27,7 @@ function confetti(){try{if(typeof v4Confetti==='function'){v4Confetti();return;}
   requestAnimationFrame(function(){qa('i',wrap).forEach(function(p){p.style.top=(70+Math.random()*40)+'%';p.style.left=(parseFloat(p.style.left)+(Math.random()*30-15))+'%';p.style.transform='rotate('+(Math.random()*900)+'deg)';p.style.opacity='0';});});
   setTimeout(function(){wrap.remove();},3000);}catch(e){}}
 
-/* ============================================================ */
-/* 1. GOOGLE AUTH — fully removed                                */
-/* ============================================================ */
-W.vMyChannel=function(){};
-function killGoogle(){
-  var r=q('#myChRow');if(r)r.remove();
-  var b=q('#myChBtn');if(b)b.remove();
-}
+/* Google-auth kill-switch удалён: «Подключить канал» активен (см. 16_viora-v2-js.js) */
 
 /* ============================================================ */
 /* 2. CUSTOM DROPDOWNS — replace ugly native selects             */
@@ -612,7 +605,6 @@ W.v5DailyIdea=async function(btn){
 /* 9. INIT                                                       */
 /* ============================================================ */
 function init(){
-  killGoogle();
   upgradeSelects();
   /* re-route legacy profile buttons rendered before v5 loaded */
   qa('#v3ProfBtn').forEach(function(b){b.remove();});

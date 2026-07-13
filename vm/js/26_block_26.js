@@ -442,7 +442,7 @@ function draw(){
   c.fillStyle=v;c.fillRect(0,0,1280,720);
   // headline
   c.textAlign=s.head.align==='center'?'center':'left';
-  c.font='900 '+s.head.size+'px Sora, Onest, Arial, sans-serif';
+  c.font='900 '+s.head.size+'px Onest, Arial, sans-serif';
   var lines=wrapText(c,s.head.text.toUpperCase(),s.head.align==='center'?1140:1100);
   var lh=s.head.size*1.08;
   lines.forEach(function(ln,i){
@@ -455,7 +455,7 @@ function draw(){
   });
   // badge
   if(s.badge.on&&s.badge.text){
-    c.font='800 44px Sora, Onest, Arial, sans-serif';
+    c.font='800 44px Onest, Arial, sans-serif';
     var bw=c.measureText(s.badge.text.toUpperCase()).width+56;
     var bx=s.badge.x,by=s.badge.y;
     var left=(s.head.align==='center')?bx-bw/2:bx;

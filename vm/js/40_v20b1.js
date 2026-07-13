@@ -234,20 +234,20 @@
       '<div style="display:flex;align-items:center;gap:14px">'
         +'<div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#FF2D55,#ff6a4d);display:flex;align-items:center;justify-content:center">'
           +'<div style="width:0;height:0;border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></div></div>'
-        +'<div style="font-family:Sora,Onest,sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px">Viora<span style="color:#ff5c7a">Media</span></div>'
+        +'<div style="font-family:Onest,sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px">Viora<span style="color:#ff5c7a">Media</span></div>'
         +'<div style="margin-left:auto;font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:#b9b2c4">AI-аудит YouTube-канала</div>'
       +'</div>'
       +'<div style="display:flex;align-items:flex-end;gap:24px;margin-top:40px">'
         +'<div style="flex:1;min-width:0">'
           +'<div style="font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#9b93a8;margin-bottom:8px">Канал</div>'
-          +'<div style="font-family:Sora,Onest,sans-serif;font-weight:800;font-size:40px;line-height:1.06;word-break:break-word">'+esc(ch.title||'—')+'</div>'
+          +'<div style="font-family:Onest,sans-serif;font-weight:800;font-size:40px;line-height:1.06;word-break:break-word">'+esc(ch.title||'—')+'</div>'
           +'<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">'
             +(niche?'<span style="font-size:15px;padding:7px 14px;border-radius:999px;background:rgba(255,45,85,.14);border:1px solid rgba(255,45,85,.4);color:#ffb9c6">'+esc(niche)+'</span>':'')
             +(subs!==''?'<span style="font-size:15px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#d7d2df">'+esc(W.fmtSafe?W.fmtSafe(subs):subs)+' подписчиков</span>':'')
           +'</div>'
         +'</div>'
         +(score!=null?'<div style="text-align:center;flex:0 0 auto">'
-          +'<div style="font-family:Sora,sans-serif;font-weight:800;font-size:84px;line-height:1;color:'+scoreCol+'">'+score+'</div>'
+          +'<div style="font-family:Onest,sans-serif;font-weight:800;font-size:84px;line-height:1;color:'+scoreCol+'">'+score+'</div>'
           +'<div style="font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#9b93a8;margin-top:4px">индекс роста / 100</div></div>':'')
       +'</div>'
       +(leak?'<div style="margin-top:36px;padding:22px 24px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)">'
@@ -258,12 +258,12 @@
         .replace(/class="vsc-lev"/g,'style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)"')
         .replace(/class="ln"/g,'style="width:30px;height:30px;flex:0 0 auto;border-radius:9px;background:linear-gradient(118deg,#ff2233,#ff6a4d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px"')
         .replace(/class="lt"/g,'style="flex:1;font-size:18px;line-height:1.35;font-weight:600"')
-        .replace(/class="le"/g,'style="flex:0 0 auto;text-align:right;font-family:Sora,sans-serif;font-weight:800;font-size:22px;color:#36e0a0"')
+        .replace(/class="le"/g,'style="flex:0 0 auto;text-align:right;font-family:Onest,sans-serif;font-weight:800;font-size:22px;color:#36e0a0"')
         +'</div>':'')
       +'<div id="vscFoot" style="margin-top:auto;padding-top:38px;display:flex;align-items:center;gap:18px">'
         +'<div id="vscQR" style="width:96px;height:96px;flex:0 0 auto;border-radius:12px;background:#fff;display:none"></div>'
         +'<div style="display:flex;flex-direction:column;gap:4px">'
-          +'<div style="font-family:Sora,sans-serif;font-weight:800;font-size:19px">VioraMedia · продюсер в кармане</div>'
+          +'<div style="font-family:Onest,sans-serif;font-weight:800;font-size:19px">VioraMedia · продюсер в кармане</div>'
           +'<div style="font-size:15px;color:#b4adbf">Полный AI-разбор твоего канала за 2 минуты → '+esc(shareUrl().replace(/^https?:\/\//,''))+'</div>'
         +'</div>'
       +'</div>';

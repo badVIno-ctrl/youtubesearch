@@ -50,6 +50,13 @@ try{
   }
 }catch(e){}
 
+/* service worker: офлайн-кеш ядра сайта + установка как приложение */
+try{
+  if('serviceWorker' in navigator&&location.protocol!=='file:'){
+    W.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+  }
+}catch(e){}
+
 /* ---------- 3. Онбординг-тур для новичков ---------- */
 var TOUR_KEY='viora_tour_done';
 function tourDone(){try{return localStorage.getItem(TOUR_KEY)==='1';}catch(e){return true;}}
@@ -74,8 +81,10 @@ else setTimeout(heroHint,1200);
 
 var TOUR_STEPS=[
   {sel:'#weekFocusSection',t:'🎯 Фокус недели',d:'Начни отсюда: три самых важных действия из всего разбора. Сделай их на этой неделе — и не утонешь в остальных секциях.'},
-  {sel:'#nsBtn,#nextShootSection',t:'🎬 План следующего видео',d:'Одна кнопка — и ИИ-продюсер соберёт полный план съёмки: тему, заголовки, хук, структуру с таймингом и чек-лист. План сохранится в «Мои съёмки».'},
-  {sel:'.verdict',t:'🩺 Главная утечка роста',d:'Главная причина, почему канал не растёт быстрее. Секции ниже раскрывают её подробнее — возвращайся к ним, когда сделаешь первые шаги.'}
+  {sel:'.verdict',t:'🩺 Главная утечка роста',d:'Главная причина, почему канал не растёт быстрее. Всё, что ниже, раскрывает её подробнее.'},
+  {sel:'#fmtAudit',t:'⚡ Shorts и длинные — отдельно',d:'Форматы живут по разным законам, поэтому выводы разделены. Подключишь свой канал — сюда добавятся реальные цифры из YouTube Analytics.'},
+  {sel:'#nsBtn,#nextShootSection',t:'🎬 План следующего видео',d:'Одна кнопка — и ИИ-продюсер соберёт полный план съёмки: тему, заголовки, хук, структуру с таймингом и чек-лист.'},
+  {sel:'#historyArea',t:'📈 История аудитов',d:'Каждый анализ сохраняется: видно, как меняются скор аудита, подписчики и вовлечённость, и закрыл ли ты пункты прошлого плана.'}
 ];
 var tourIdx=0,tourEls=null;
 function tourUI(){
@@ -90,7 +99,7 @@ W.__vTourNext=function(){tourIdx++;showStep();};
 W.__vTourSkip=function(){endTour();};
 function showStep(){
   var st=TOUR_STEPS[tourIdx];
-  if(!st){endTour();toastSafe('Удачи! Все секции разбора — ниже по странице 👇','ok',3500);return;}
+  if(!st){endTour();toastSafe('Удачи! Реальное удержание вместо прогноза появится после «Подключить мой канал» на главной 📡','ok',4200);return;}
   var el=null;st.sel.split(',').some(function(s){var c=D.querySelector(s.trim());if(c&&c.offsetParent){el=c;return true;}return false;});
   if(!el){tourIdx++;showStep();return;}
   var u=tourUI();
@@ -113,12 +122,36 @@ W.vTourMaybe=function(){
   tourIdx=0;showStep();
 };
 
-/* ---------- 4. «Мой канал» через Google (реальные метрики) ---------- */
-/* Чтобы включить вход через Google: вставь сюда OAuth Client ID
+/* ---------- 4. «Подключить канал»: импорт данных из YouTube API (реальные метрики) ---------- */
+/* «Подключить канал» = разовый импорт данных из YouTube API (read-only), НЕ авторизация на сайте.
+   Чтобы включить: вставь сюда OAuth Client ID
    (Google Cloud Console → Credentials → OAuth client ID → Web application,
    в Authorized JavaScript origins добавь адреса сайта). */
-var OAUTH_CLIENT_ID='';
+var OAUTH_CLIENT_ID='50946687049-rl38pem9tf9bf9ca3o45q5be7l8837rl.apps.googleusercontent.com';
 var MY_TOKEN=null;
+var TOK_KEY='viora_ytok_v1';
+function tokSave(o){try{localStorage.setItem(TOK_KEY,JSON.stringify(o));}catch(e){}}
+function tokLoad(){try{var o=JSON.parse(localStorage.getItem(TOK_KEY)||'null');if(o&&o.t&&o.e>Date.now())return o;}catch(e){}return null;}
+function tokClear(){try{localStorage.removeItem(TOK_KEY);}catch(e){}MY_TOKEN=null;W.__vMyChId=null;W.__vMyChTitle=null;vConnSync();}
+function vConnSync(){
+  var b=D.getElementById('connectChannelBtn');if(!b)return;
+  var on=!!(MY_TOKEN&&W.__vMyChId);
+  b.classList.toggle('connected',on);
+  b.textContent=on?("✅ Канал подключён: "+(W.__vMyChTitle||'мой канал')):'📡 Подключить мой канал';
+  b.title=on?'Подключение активно. Нажми, чтобы обновить доступ или сменить аккаунт':'';
+}
+W.vConnSync=vConnSync;
+(function(){
+  var o=tokLoad();
+  if(o){MY_TOKEN=o.t;if(o.c)W.__vMyChId=o.c;if(o.n)W.__vMyChTitle=o.n;}
+  if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',vConnSync);else vConnSync();
+  W.addEventListener('storage',function(e){
+    if(e.key!==TOK_KEY)return;
+    var o2=tokLoad();
+    MY_TOKEN=o2?o2.t:null;W.__vMyChId=o2?(o2.c||null):null;W.__vMyChTitle=o2?(o2.n||null):null;
+    vConnSync();
+  });
+})();
 function v2Modal(html){
   var ov=D.createElement('div');ov.className='v2ov';
   ov.innerHTML='<div class="v2modal"><button class="x" onclick="this.closest(&quot;.v2ov&quot;).remove()">✕</button>'+html+'</div>';
@@ -126,9 +159,9 @@ function v2Modal(html){
   D.body.appendChild(ov);return ov;
 }
 function myChSetup(){
-  v2Modal('<h3>🔐 Вход через Google пока не настроен</h3>'
-   +'<p>Когда владелец сайта включит вход через Google, здесь появятся <b>реальное удержание, время просмотра и подписки</b> твоего канала из YouTube Analytics.</p>'
-   +'<p>А пока просто вставь ссылку на свой канал в поле выше — полный разбор работает и без входа.</p>'
+  v2Modal('<h3>📡 Подключение канала пока не настроено</h3>'
+   +'<p>«Подключить канал» — это разовая передача данных твоего канала из YouTube API прямо в твой браузер (режим «только чтение»). Это <b>не вход и не регистрация</b>: аккаунт на сайте не создаётся, пароль никому не передаётся, данные никуда не сохраняются.</p><p>Когда владелец сайта включит подключение, здесь появятся <b>реальное удержание, время просмотра и подписки</b> твоего канала.</p>'
+   +'<p>А пока просто вставь ссылку на свой канал в поле выше — полный разбор работает и без подключения.</p>'
    +'<details><summary style="cursor:pointer;font-size:13px;color:#ff8da1">Инструкция для владельца сайта (≈5 минут)</summary>'
    +'<ol><li>Зайди в <code>console.cloud.google.com</code> и создай проект.</li>'
    +'<li>В «APIs &amp; Services → Library» включи <b>YouTube Data API v3</b> и <b>YouTube Analytics API</b>.</li>'
@@ -143,15 +176,17 @@ W.vMyChannel=function(){
       client_id:OAUTH_CLIENT_ID,
       scope:'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly',
       callback:function(resp){
-        if(resp&&resp.access_token){MY_TOKEN=resp.access_token;myChStart();}
-        else toastSafe('Google не выдал доступ — попробуй ещё раз','warn');
+        if(resp&&resp.access_token){MY_TOKEN=resp.access_token;tokSave({t:MY_TOKEN,e:Date.now()+55*60*1000});myChStart();}
+        else toastSafe('YouTube не выдал доступ к данным — попробуй ещё раз','warn');
       }
     });
     tc.requestAccessToken();
-  }).catch(function(e){toastSafe('Не удалось загрузить Google-вход: '+(e&&e.message||''),'err');});
+  }).catch(function(e){toastSafe('Не удалось загрузить модуль подключения: '+(e&&e.message||''),'err');});
 };
 function gFetch(url){
   return fetch(url,{headers:{Authorization:'Bearer '+MY_TOKEN}}).then(function(r){
+    if(r.status===401){tokClear();throw new Error('подключение канала истекло — нажми «Подключить мой канал» ещё раз');}
+    if(r.status===403)throw new Error('Google API: 403 — нет доступа к аналитике. Проверь: включён ли YouTube Analytics API в Google Cloud и тот ли это аккаунт, на котором есть канал');
     if(!r.ok)throw new Error('Google API: '+r.status);return r.json();
   });
 }
@@ -159,6 +194,9 @@ function myChStart(){
   gFetch('https://www.googleapis.com/youtube/v3/channels?part=id,snippet&mine=true').then(function(d){
     var it=d.items&&d.items[0];if(!it)throw new Error('канал не найден на этом Google-аккаунте');
     W.__vMyChId=it.id;
+    W.__vMyChTitle=(it.snippet&&it.snippet.title)||'';
+    var _po=tokLoad()||{};tokSave({t:MY_TOKEN,e:_po.e||(Date.now()+55*60*1000),c:it.id,n:W.__vMyChTitle});
+    vConnSync();
     var inp=D.getElementById('urlInput');if(inp)inp.value='https://www.youtube.com/channel/'+it.id;
     toastSafe('Подключён канал «'+((it.snippet&&it.snippet.title)||'')+'» — запускаю разбор','ok',3500);
     if(W.startAnalysis)W.startAnalysis();
@@ -169,8 +207,47 @@ W.vMyStatsMaybe=function(){
     var s=stv();
     if(!MY_TOKEN||!W.__vMyChId||!s||!s.channel||s.channel.id!==W.__vMyChId)return;
     renderMyStats();
+    fmtRealFetch();
   }catch(e){}
 };
+/* --- реальная кривая удержания конкретного ролика (YouTube Analytics) --- */
+var RET_CACHE={};
+W.vRealRetention=function(vid){
+  try{
+    var s=stv();
+    if(!MY_TOKEN||!W.__vMyChId||!s||!s.channel||s.channel.id!==W.__vMyChId)return Promise.resolve(null);
+  }catch(e){return Promise.resolve(null);}
+  if(RET_CACHE[vid])return RET_CACHE[vid];
+  var url='https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2010-01-01&endDate='+new Date().toISOString().slice(0,10)
+    +'&metrics=audienceWatchRatio&dimensions=elapsedVideoTimeRatio&filters=video%3D%3D'+encodeURIComponent(vid);
+  RET_CACHE[vid]=gFetch(url).then(function(d){
+    var rows=d.rows||[];if(rows.length<2)return null;
+    var pts=[],n=rows.length;
+    for(var i=0;i<10;i++){var idx=Math.min(n-1,Math.round(i*(n-1)/9));pts.push(Math.max(0,Math.min(100,Math.round((+rows[idx][1]||0)*100))));}
+    return pts;
+  }).catch(function(){delete RET_CACHE[vid];return null;});
+  return RET_CACHE[vid];
+};
+/* --- Shorts vs длинные: реальные цифры Analytics за 28 дней --- */
+function fmtRealFetch(){
+  if(W.__vFmtReal&&W.__vFmtReal._ch===W.__vMyChId){try{W.renderFormatAudit&&W.renderFormatAudit();}catch(e){}return;}
+  var end=new Date(),start=new Date(Date.now()-28*864e5);
+  function ds(d){return d.toISOString().slice(0,10);}
+  var base='https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate='+ds(start)+'&endDate='+ds(end);
+  gFetch(base+'&metrics=views,estimatedMinutesWatched,averageViewDuration,subscribersGained&dimensions=creatorContentType')
+    .catch(function(){return gFetch(base+'&metrics=views,estimatedMinutesWatched,averageViewDuration&dimensions=creatorContentType');})
+    .then(function(d){
+      var out={_ch:W.__vMyChId};
+      (d.rows||[]).forEach(function(r){
+        var key=String(r[0]||'').toUpperCase();
+        var o={views:+r[1]||0,min:+r[2]||0,avd:+r[3]||0,subs:r.length>4?(+r[4]||0):null};
+        if(key==='SHORTS')out.shorts=o;
+        else if(key==='VIDEO_ON_DEMAND')out.longs=o;
+      });
+      W.__vFmtReal=out;
+      try{W.renderFormatAudit&&W.renderFormatAudit();}catch(e){}
+    }).catch(function(){});
+}
 function renderMyStats(){
   var sec=D.getElementById('myStatsSection'),area=D.getElementById('myStatsArea');if(!sec||!area)return;
   sec.style.display='block';

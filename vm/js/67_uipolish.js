@@ -78,7 +78,7 @@ function buildNav(){
           try{var head=sec.querySelector('.section-h');if(head)head.click();}catch(_){}
         }
         /* прокрутка с поправкой на фиксированную (sticky) шапку, чтобы заголовок не прятался под неё */
-        var navbar=q('.nav'),off=(navbar?navbar.getBoundingClientRect().height:64)+14;
+        var navbar=q('.nav'),_qn=q('#vQuickNav'),off=(navbar?navbar.getBoundingClientRect().height:64)+((_qn&&_qn.classList.contains('show'))?_qn.getBoundingClientRect().height+22:14);
         var y=el.getBoundingClientRect().top+W.pageYOffset-off;
         W.scrollTo({top:y<0?0:y,behavior:reduce?'auto':'smooth'});
       });

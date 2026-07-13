@@ -12,7 +12,7 @@
 <meta name="description" content="Умный парсер и AI-аудитор YouTube-каналов: что залетело, что нет, и пошаговый план роста." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- html2canvas и jspdf грузятся лениво (см. viora-v2-js), чтобы не тормозить первую загрузку -->
@@ -21,7 +21,6 @@
 
 </head>
 <body>
-<canvas id="matrix"></canvas>
 <div id="bg-veil"></div>
 
 <div class="layer">
@@ -51,6 +50,10 @@
         <div class="examples">Поддерживаются все форматы. Примеры: 
           <code onclick="fillEx('https://www.youtube.com/@MrBeast')">@MrBeast</code>
           <code onclick="fillEx('https://www.youtube.com/@veritasium')">@veritasium</code>
+        </div>
+        <div class="connect-row">
+          <button class="btn ghost sm" id="connectChannelBtn" type="button" onclick="window.vMyChannel&&window.vMyChannel()">📡 Подключить мой канал</button>
+          <span class="connect-note">Разовый импорт данных твоего канала из YouTube API, только чтение. Это не вход и не регистрация — аккаунт на сайте не создаётся.</span>
         </div>
 
       </div>
@@ -382,7 +385,6 @@
 
 <script defer src="js/14_viora-r10-js.js"></script>
 
-<script defer src="js/15_block_15.js"></script>
 <script defer src="js/16_viora-v2-js.js"></script>
 
 <script defer src="js/17_v3pack.js"></script>
@@ -431,40 +433,28 @@
 
 <!-- VIORA_V14_PACK -->
 
-<script defer src="js/28_block_28.js"></script>
 <!-- VIORA_V14_PACK -->
 
 
 <!-- VIORA_V15_PACK -->
 
-<script defer src="js/29_block_29.js"></script>
 <!-- VIORA_V15_PACK -->
 
 <!-- ============ VIORA_V16_PACK: Штаб · календарь · турнир · чек-ап · онбординг + V17: фиксы · Штаб 2.0 · неделя · авто-синк · демо ============ -->
 
 
-<script defer src="js/30_block_30.js"></script>
-<script defer src="js/31_block_31.js"></script>
-<script defer src="js/32_block_32.js"></script>
 
 
 <script defer src="js/33_block_33.js"></script>
-<script defer src="js/34_block_34.js"></script>
 
 
-<script defer src="js/35_block_35.js"></script>
-<script defer src="js/36_block_36.js"></script>
 
 
-<script defer src="js/37_block_37.js"></script>
-<script defer src="js/38_block_38.js"></script>
-<script defer src="js/39_block_39.js"></script>
 
 <script defer src="js/40_v20b1.js"></script>
 
 <script defer src="js/41_v20b2pack.js"></script>
 
-<script defer src="js/42_v21pack.js"></script>
 <!-- ====================================================================
      VIORA v22 — «Старт и возвращение»
      Самодостаточный модуль: онбординг новичка (A1, A2) + ретеншн (B1–B4).
@@ -474,7 +464,6 @@
      AI-вызовы идут через глобальный callMistralRaw с мягким фолбэком.
      ==================================================================== -->
 
-<script defer src="js/43_block_43.js"></script>
 
 <!-- VIORA v22 — точе��ные мобильные фиксы наложений (scoped, десктоп не затронут) -->
 
@@ -487,12 +476,9 @@
 
 <script defer src="js/44_block_44.js"></script>
 
-<script defer src="js/45_block_45.js"></script>
 
 
-<script defer src="js/46_block_46.js"></script>
 
-<script defer src="js/47_block_47.js"></script>
 
 <script defer src="js/48_v26js.js"></script>
 
@@ -591,5 +577,6 @@
 <script defer src="js/65_perf.js"></script>
 <script defer src="js/66_history_delta.js"></script>
 <script defer src="js/67_uipolish.js"></script>
+<script defer src="js/68_v32pack.js"></script>
 
 </body></html>
